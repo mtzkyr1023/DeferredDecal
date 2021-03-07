@@ -1,0 +1,4 @@
+MaterialCount:1
+AllVertexCount:24
+AllIndexCount:36
+ImageCount:0

@@ -1,0 +1,30 @@
+#ifndef _ROOT_SIGNATURE_H_
+#define _ROOT_SIGNATURE_H_
+
+#include <d3d12.h>
+
+#include <wrl/client.h>
+
+#include <unordered_map>
+#include <vector>
+
+class RootSignature {
+public:
+	RootSignature() = default;
+	~RootSignature() = default;
+
+	bool create(ID3D12Device* device, D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlag);
+
+	void addDeDescriptorCount(D3D12_SHADER_VISIBILITY shaderVisiblity, D3D12_DESCRIPTOR_RANGE_TYPE descType, UINT baseShaderRegister, UINT count);
+
+	ID3D12RootSignature* getRootSignature() { return m_rootSignature.Get(); }
+
+private:
+	Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignature;
+
+	std::vector<D3D12_DESCRIPTOR_RANGE> m_range;
+	std::vector<D3D12_SHADER_VISIBILITY> m_shaderVisiblity;
+};
+
+
+#endif

@@ -1,0 +1,189 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="ソース ファイル">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="ヘッダー ファイル">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="リソース ファイル">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="リソース ファイル\tools">
+      <UniqueIdentifier>{8f1709b5-7463-4deb-80f3-c767c11efd48}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\framework">
+      <UniqueIdentifier>{208456a0-9441-43bb-aa20-ad9da731d248}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\framework">
+      <UniqueIdentifier>{138df14f-20bf-4e71-99f8-3ae6993d131e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\render_pass">
+      <UniqueIdentifier>{06d36492-03e3-4269-8b36-9682f8ff3e07}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\render_pass">
+      <UniqueIdentifier>{7ea46b80-6a73-4169-9b06-4abfc3a2eb55}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="リソース ファイル\imgui">
+      <UniqueIdentifier>{89e63583-b249-4e89-81a0-e07196eeb8dc}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="app.hpp">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="tools\input.h">
+      <Filter>リソース ファイル\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="tools\mesh_loader.h">
+      <Filter>リソース ファイル\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="framework\device.h">
+      <Filter>ヘッダー ファイル\framework</Filter>
+    </ClInclude>
+    <ClInclude Include="framework\queue.h">
+      <Filter>ヘッダー ファイル\framework</Filter>
+    </ClInclude>
+    <ClInclude Include="framework\commandbuffer.h">
+      <Filter>ヘッダー ファイル\framework</Filter>
+    </ClInclude>
+    <ClInclude Include="framework\swapchain.h">
+      <Filter>ヘッダー ファイル\framework</Filter>
+    </ClInclude>
+    <ClInclude Include="framework\descriptor_heap.h">
+      <Filter>ヘッダー ファイル\framework</Filter>
+    </ClInclude>
+    <ClInclude Include="framework\resource.h">
+      <Filter>ヘッダー ファイル\framework</Filter>
+    </ClInclude>
+    <ClInclude Include="framework\buffer.h">
+      <Filter>ヘッダー ファイル\framework</Filter>
+    </ClInclude>
+    <ClInclude Include="framework\root_signature.h">
+      <Filter>ヘッダー ファイル\framework</Filter>
+    </ClInclude>
+    <ClInclude Include="framework\pipeline.h">
+      <Filter>ヘッダー ファイル\framework</Filter>
+    </ClInclude>
+    <ClInclude Include="framework\shader.h">
+      <Filter>ヘッダー ファイル\framework</Filter>
+    </ClInclude>
+    <ClInclude Include="framework\texture.h">
+      <Filter>ヘッダー ファイル\framework</Filter>
+    </ClInclude>
+    <ClInclude Include="framework\fence.h">
+      <Filter>ヘッダー ファイル\framework</Filter>
+    </ClInclude>
+    <ClInclude Include="tools\model.h">
+      <Filter>リソース ファイル\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="render_pass\geometory_pass.h">
+      <Filter>ヘッダー ファイル\render_pass</Filter>
+    </ClInclude>
+    <ClInclude Include="render_pass\render_pass.h">
+      <Filter>ヘッダー ファイル\render_pass</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui_dx12\imstb_textedit.h">
+      <Filter>リソース ファイル\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui_dx12\imstb_truetype.h">
+      <Filter>リソース ファイル\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui_dx12\imconfig.h">
+      <Filter>リソース ファイル\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui_dx12\imgui.h">
+      <Filter>リソース ファイル\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui_dx12\imgui_impl_dx12.h">
+      <Filter>リソース ファイル\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui_dx12\imgui_impl_win32.h">
+      <Filter>リソース ファイル\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui_dx12\imgui_internal.h">
+      <Filter>リソース ファイル\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui_dx12\imstb_rectpack.h">
+      <Filter>リソース ファイル\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="tools\my_gui.h">
+      <Filter>リソース ファイル\tools</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="app.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="tools\input.cpp">
+      <Filter>リソース ファイル\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="tools\mesh_loader.cpp">
+      <Filter>リソース ファイル\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="framework\device.cpp">
+      <Filter>ソース ファイル\framework</Filter>
+    </ClCompile>
+    <ClCompile Include="framework\queue.cpp">
+      <Filter>ソース ファイル\framework</Filter>
+    </ClCompile>
+    <ClCompile Include="framework\commandbuffer.cpp">
+      <Filter>ソース ファイル\framework</Filter>
+    </ClCompile>
+    <ClCompile Include="framework\swapchain.cpp">
+      <Filter>ソース ファイル\framework</Filter>
+    </ClCompile>
+    <ClCompile Include="framework\descriptor_heap.cpp">
+      <Filter>ソース ファイル\framework</Filter>
+    </ClCompile>
+    <ClCompile Include="framework\buffer.cpp">
+      <Filter>ソース ファイル\framework</Filter>
+    </ClCompile>
+    <ClCompile Include="framework\root_signature.cpp">
+      <Filter>ソース ファイル\framework</Filter>
+    </ClCompile>
+    <ClCompile Include="framework\Shader.cpp">
+      <Filter>ソース ファイル\framework</Filter>
+    </ClCompile>
+    <ClCompile Include="framework\pipeline.cpp">
+      <Filter>ソース ファイル\framework</Filter>
+    </ClCompile>
+    <ClCompile Include="framework\texture.cpp">
+      <Filter>ソース ファイル\framework</Filter>
+    </ClCompile>
+    <ClCompile Include="framework\fence.cpp">
+      <Filter>ソース ファイル\framework</Filter>
+    </ClCompile>
+    <ClCompile Include="tools\model.cpp">
+      <Filter>リソース ファイル\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui_dx12\imgui.cpp">
+      <Filter>リソース ファイル\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui_dx12\imgui_demo.cpp">
+      <Filter>リソース ファイル\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui_dx12\imgui_draw.cpp">
+      <Filter>リソース ファイル\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui_dx12\imgui_impl_dx12.cpp">
+      <Filter>リソース ファイル\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui_dx12\imgui_impl_win32.cpp">
+      <Filter>リソース ファイル\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui_dx12\imgui_widgets.cpp">
+      <Filter>リソース ファイル\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="tools\my_gui.cpp">
+      <Filter>リソース ファイル\tools</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
