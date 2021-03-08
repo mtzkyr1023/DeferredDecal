@@ -26,7 +26,7 @@ bool Pipeline::create(ID3D12Device* device, ID3D12RootSignature* rootSignature) 
 	gpsDesc.PS = { m_pixelShader->GetBufferPointer(), m_pixelShader->GetBufferSize() };
 	gpsDesc.RasterizerState = m_rasterDesc;
 	gpsDesc.BlendState = blendDesc;
-	gpsDesc.DepthStencilState.DepthEnable = TRUE;
+	gpsDesc.DepthStencilState.DepthEnable = m_depthEnable;
 	gpsDesc.DepthStencilState.StencilEnable = FALSE;
 	gpsDesc.DepthStencilState.DepthFunc = m_depthFunc;
 	gpsDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
@@ -68,8 +68,9 @@ void Pipeline::setDepthStencilFormat(DXGI_FORMAT format) {
 	m_depthStencilFormat = format;
 }
 
-void Pipeline::setDepthFunc(D3D12_COMPARISON_FUNC func) {
+void Pipeline::setDepthState(bool depthEnable, D3D12_COMPARISON_FUNC func) {
 	m_depthFunc = func;
+	m_depthEnable = depthEnable;
 }
 
 void Pipeline::setRasterState(D3D12_FILL_MODE fillMode, D3D12_CULL_MODE cullMode) {

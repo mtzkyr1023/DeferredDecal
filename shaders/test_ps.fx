@@ -1,4 +1,6 @@
 
+Texture2D albedoTex : register(t0);
+SamplerState wrapSampler : register(s0);
 
 struct PS_IN {
 	float4 pos : SV_POSITION;
@@ -14,9 +16,7 @@ struct PS_OUT {
 
 PS_OUT main(PS_IN input) {
 	PS_OUT output = (PS_OUT)0;
-	float intensity = saturate(dot(input.nor, normalize(float3(1.0f, 1.0f, 1.0f)))) * 0.5f + 0.5f;
-	intensity *= intensity;
-	output.color = float4(1.0f, 1.0f, 1.0f, 1.0f) * intensity;
+	output.color = albedoTex.Sample(wrapSampler, input.tex);
 	output.normal = float4(input.nor, input.viewDistance);
 	return output;
 }

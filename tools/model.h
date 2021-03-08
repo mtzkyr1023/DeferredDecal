@@ -50,6 +50,13 @@ public:
 			return &m_images[m_roughMetalImageIndex[num]];
 	}
 
+	Texture* getTexture(uint32_t num) { return &m_images[num]; }
+
+	uint32_t getTextureCount() { return m_images.size(); }
+	uint32_t getAlbedoTextureINdex(uint32_t num) { return m_albedoImageIndex[num]; }
+	uint32_t getNormalTextureINdex(uint32_t num) { return m_normalImageIndex[num]; }
+	uint32_t getRoughMetalTextureINdex(uint32_t num) { return m_roughMetalImageIndex[num]; }
+
 	glm::vec3& getMin() { return m_min; }
 	glm::vec3& getMax() { return m_max; }
 

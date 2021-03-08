@@ -75,6 +75,8 @@ bool App::initialize(HWND hwnd) {
 		return false;
 
 	m_geometoryRootSignature.addDeDescriptorCount(D3D12_SHADER_VISIBILITY_VERTEX, D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 0, 1);
+	m_geometoryRootSignature.addDeDescriptorCount(D3D12_SHADER_VISIBILITY_PIXEL, D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 0, 1);
+	m_geometoryRootSignature.addDeDescriptorCount(D3D12_SHADER_VISIBILITY_PIXEL, D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 0, 1);
 	if (!m_geometoryRootSignature.create(m_device.getDevice(), D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
@@ -128,7 +130,7 @@ bool App::initialize(HWND hwnd) {
 	m_geometoryPipeline.addInputLayout("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT, 0);
 	m_geometoryPipeline.addRenderTargetFormat(DXGI_FORMAT_R8G8B8A8_UNORM);
 	m_geometoryPipeline.addRenderTargetFormat(DXGI_FORMAT_R16G16B16A16_FLOAT);
-	m_geometoryPipeline.setDepthFunc(D3D12_COMPARISON_FUNC_LESS);
+	m_geometoryPipeline.setDepthState(true, D3D12_COMPARISON_FUNC_LESS);
 	m_geometoryPipeline.setDepthStencilFormat(DXGI_FORMAT_D32_FLOAT);
 	m_geometoryPipeline.setRasterState(D3D12_FILL_MODE_SOLID, D3D12_CULL_MODE_NONE);
 
@@ -139,13 +141,13 @@ bool App::initialize(HWND hwnd) {
 	m_decalPipeline.addInputLayout("TANGENT", DXGI_FORMAT_R32G32B32_FLOAT, 0);
 	m_decalPipeline.addInputLayout("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT, 0);
 	m_decalPipeline.addRenderTargetFormat(DXGI_FORMAT_R8G8B8A8_UNORM);
-	m_decalPipeline.setDepthFunc(D3D12_COMPARISON_FUNC_NEVER);
+	m_decalPipeline.setDepthState(false, D3D12_COMPARISON_FUNC_NEVER);
 	m_decalPipeline.setRasterState(D3D12_FILL_MODE_SOLID, D3D12_CULL_MODE_FRONT);
 
 	m_lastPipeline.setVertexShader(m_screenVS.getByteCode());
 	m_lastPipeline.setPixelShader(m_lastPS.getByteCode());
 	m_lastPipeline.addRenderTargetFormat(DXGI_FORMAT_R8G8B8A8_UNORM);
-	m_lastPipeline.setDepthFunc(D3D12_COMPARISON_FUNC_NEVER);
+	m_lastPipeline.setDepthState(false, D3D12_COMPARISON_FUNC_NEVER);
 	m_lastPipeline.setRasterState(D3D12_FILL_MODE_SOLID, D3D12_CULL_MODE_NONE);
 
 	if (!m_geometoryPipeline.create(m_device.getDevice(), m_geometoryRootSignature.getRootSignature()))
@@ -166,7 +168,11 @@ bool App::initialize(HWND hwnd) {
 	if (!m_fence.create(m_device.getDevice()))
 		return false;
 
-	if (!m_geometoryCbvHeap.create(m_device.getDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, backBufferCount * 2))
+	if (!m_geometoryCbvHeap.create(m_device.getDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+		backBufferCount * 2 + m_mesh.getTextureCount()))
+		return false;
+
+	if (!m_geometorySamplerHeap.create(m_device.getDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, 1))
 		return false;
 
 	if (!m_decalRtvHeap.create(m_device.getDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1))
@@ -198,33 +204,67 @@ bool App::initialize(HWND hwnd) {
 		m_device.getDevice()->CreateDepthStencilView(m_depthBuffer.getResource(0), &dsDesc, dsvHandle);
 	}
 
-	for (UINT i = 0; i < backBufferCount; i++) {
-		D3D12_RENDER_TARGET_VIEW_DESC rtDesc{};
-		rtDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		rtDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-		rtDesc.Texture2D.MipSlice = 0;
-		rtDesc.Texture2D.PlaneSlice = 0;
-
-		auto rtvHandle = m_rtvHeap.getDescriptorHeap()->GetCPUDescriptorHandleForHeapStart();
-		rtvHandle.ptr += i * m_rtvHeap.getDescriptorSize();
-
-		m_device.getDevice()->CreateRenderTargetView(m_backBuffer.getResource(i), &rtDesc, rtvHandle);
-
-
-		D3D12_CONSTANT_BUFFER_VIEW_DESC cbDesc{};
-		cbDesc.BufferLocation = m_cb0.getResource(i * 2)->GetGPUVirtualAddress();
-		cbDesc.SizeInBytes = sizeof(CB0);
-
+	{
 		auto cbvHandle = m_geometoryCbvHeap.getDescriptorHeap()->GetCPUDescriptorHandleForHeapStart();
-		cbvHandle.ptr += i * m_geometoryCbvHeap.getDescriptorSize() * 2;
 
-		m_device.getDevice()->CreateConstantBufferView(&cbDesc, cbvHandle);
+		for (UINT i = 0; i < backBufferCount; i++) {
+			D3D12_RENDER_TARGET_VIEW_DESC rtDesc{};
+			rtDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			rtDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+			rtDesc.Texture2D.MipSlice = 0;
+			rtDesc.Texture2D.PlaneSlice = 0;
 
-		cbDesc.BufferLocation = m_cb0.getResource(i * 2 + 1)->GetGPUVirtualAddress();
+			auto rtvHandle = m_rtvHeap.getDescriptorHeap()->GetCPUDescriptorHandleForHeapStart();
+			rtvHandle.ptr += i * m_rtvHeap.getDescriptorSize();
 
-		cbvHandle.ptr += m_geometoryCbvHeap.getDescriptorSize();
+			m_device.getDevice()->CreateRenderTargetView(m_backBuffer.getResource(i), &rtDesc, rtvHandle);
 
-		m_device.getDevice()->CreateConstantBufferView(&cbDesc, cbvHandle);
+
+			D3D12_CONSTANT_BUFFER_VIEW_DESC cbDesc{};
+			cbDesc.BufferLocation = m_cb0.getResource(i * 2)->GetGPUVirtualAddress();
+			cbDesc.SizeInBytes = sizeof(CB0);
+
+			cbvHandle = m_geometoryCbvHeap.getDescriptorHeap()->GetCPUDescriptorHandleForHeapStart();
+			cbvHandle.ptr += i * m_geometoryCbvHeap.getDescriptorSize() * 2;
+
+			m_device.getDevice()->CreateConstantBufferView(&cbDesc, cbvHandle);
+
+			cbDesc.BufferLocation = m_cb0.getResource(i * 2 + 1)->GetGPUVirtualAddress();
+
+			cbvHandle.ptr += m_geometoryCbvHeap.getDescriptorSize();
+
+			m_device.getDevice()->CreateConstantBufferView(&cbDesc, cbvHandle);
+		}
+
+		for (UINT i = 0; i < m_mesh.getTextureCount(); i++) {
+			D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+			srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+			srvDesc.Texture2D.MipLevels = 1;
+			srvDesc.Texture2D.MostDetailedMip = 0;
+			srvDesc.Texture2D.PlaneSlice = 0;
+			srvDesc.Texture2D.ResourceMinLODClamp = 0;
+
+			cbvHandle.ptr += m_geometoryCbvHeap.getDescriptorSize();
+
+			m_device.getDevice()->CreateShaderResourceView(m_mesh.getTexture(i)->getResource(0), &srvDesc, cbvHandle);
+		}
+
+		auto samplerHandle = m_geometorySamplerHeap.getDescriptorHeap()->GetCPUDescriptorHandleForHeapStart();
+
+		D3D12_SAMPLER_DESC samplerDesc{};
+		samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		samplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		samplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+		samplerDesc.Filter = D3D12_FILTER_ANISOTROPIC;
+		samplerDesc.MaxAnisotropy = 16;
+		samplerDesc.MaxLOD = FLT_MAX;
+		samplerDesc.MinLOD = 0.0f;
+		samplerDesc.MipLODBias = 0.0f;
+
+		m_device.getDevice()->CreateSampler(&samplerDesc, samplerHandle);
 	}
 
 	{
@@ -402,14 +442,17 @@ void App::render() {
 
 	ID3D12DescriptorHeap* descHeaps[] = {
 		m_geometoryCbvHeap.getDescriptorHeap(),
+		m_geometorySamplerHeap.getDescriptorHeap(),
 	};
-	command->SetDescriptorHeaps(1, descHeaps);
+	command->SetDescriptorHeaps(_countof(descHeaps), descHeaps);
 
 	command->SetGraphicsRootSignature(m_geometoryRootSignature.getRootSignature());
 
 	auto cbvHandle = m_geometoryCbvHeap.getDescriptorHeap()->GetGPUDescriptorHandleForHeapStart();
+	auto samplerHandle = m_geometorySamplerHeap.getDescriptorHeap()->GetGPUDescriptorHandleForHeapStart();
 	cbvHandle.ptr += curImageCount * m_geometoryCbvHeap.getDescriptorSize() * 2;
 	command->SetGraphicsRootDescriptorTable(0, cbvHandle);
+	command->SetGraphicsRootDescriptorTable(2, samplerHandle);
 
 	command->SetPipelineState(m_geometoryPipeline.getPipelineState());
 
@@ -421,12 +464,19 @@ void App::render() {
 	command->IASetIndexBuffer(m_mesh.getIndexBuffer()->getIndexBufferView(0));
 	command->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	for (UINT i = 0; i < m_mesh.getMaterialCount(); i++) {
+		cbvHandle = m_geometoryCbvHeap.getDescriptorHeap()->GetGPUDescriptorHandleForHeapStart();
+		cbvHandle.ptr += m_geometoryCbvHeap.getDescriptorSize() * m_mesh.getAlbedoTextureINdex(i) +
+			2 * m_geometoryCbvHeap.getDescriptorSize() * backBufferCount;
+		command->SetGraphicsRootDescriptorTable(1, cbvHandle);
+
 		command->DrawIndexedInstanced(m_mesh.getIndexCount(i), 1, indexOffset, vertexOffset, 0);
 
 		vertexOffset += m_mesh.getVertexCount(i);
 		indexOffset += m_mesh.getIndexCount(i);
 	}
 
+	cbvHandle = m_geometoryCbvHeap.getDescriptorHeap()->GetGPUDescriptorHandleForHeapStart();
+	cbvHandle.ptr += curImageCount * m_geometoryCbvHeap.getDescriptorSize() * 2;
 	cbvHandle.ptr += m_geometoryCbvHeap.getDescriptorSize();
 	command->SetGraphicsRootDescriptorTable(0, cbvHandle);
 

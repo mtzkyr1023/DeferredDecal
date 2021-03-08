@@ -60,6 +60,7 @@ private:
 	Queue m_queue;
 	Swapchain m_swapchain;
 	DescriptorHeap m_geometoryCbvHeap;
+	DescriptorHeap m_geometorySamplerHeap;
 	DescriptorHeap m_lastSrvHeap;
 	DescriptorHeap m_lastSamplerHeap;
 	DescriptorHeap m_geometoryRtvHeap;

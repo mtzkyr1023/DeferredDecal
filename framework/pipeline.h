@@ -17,7 +17,7 @@ public:
 	void addInputLayout(const char* name, DXGI_FORMAT format, UINT semanticIndex);
 	void addRenderTargetFormat(DXGI_FORMAT format);
 	void setDepthStencilFormat(DXGI_FORMAT format);
-	void setDepthFunc(D3D12_COMPARISON_FUNC func);
+	void setDepthState(bool depthEnable, D3D12_COMPARISON_FUNC func);
 	void setRasterState(D3D12_FILL_MODE fillMode, D3D12_CULL_MODE cullMode);
 	void setVertexShader(IDxcBlob* blob);
 	void setPixelShader(IDxcBlob* blob);
@@ -29,6 +29,7 @@ private:
 	std::vector<D3D12_INPUT_ELEMENT_DESC> m_layout;
 	D3D12_RASTERIZER_DESC m_rasterDesc;
 	D3D12_COMPARISON_FUNC m_depthFunc;
+	bool m_depthEnable;
 	std::vector<DXGI_FORMAT> m_rtvFormat;
 	DXGI_FORMAT m_depthStencilFormat;
 	IDxcBlob* m_vertexShader;
