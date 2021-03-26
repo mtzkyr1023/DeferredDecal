@@ -4,16 +4,46 @@
 bool Pipeline::create(ID3D12Device* device, ID3D12RootSignature* rootSignature) {
 	HRESULT res;
 
-	D3D12_RENDER_TARGET_BLEND_DESC rtblendDesc = {
-		FALSE, FALSE,
-		D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
-		D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
-		D3D12_LOGIC_OP_NOOP,
-		D3D12_COLOR_WRITE_ENABLE_ALL
-	};
+	D3D12_RENDER_TARGET_BLEND_DESC rtblendDesc{};
+	if (m_blendState == BlendState::eNone) {
+		rtblendDesc.BlendEnable = FALSE;
+		rtblendDesc.LogicOpEnable = FALSE;
+		rtblendDesc.SrcBlend = D3D12_BLEND_ONE;
+		rtblendDesc.DestBlend = D3D12_BLEND_ZERO;
+		rtblendDesc.BlendOp = D3D12_BLEND_OP_ADD;
+		rtblendDesc.SrcBlendAlpha = D3D12_BLEND_ONE;
+		rtblendDesc.DestBlendAlpha = D3D12_BLEND_ZERO;
+		rtblendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
+		rtblendDesc.LogicOp = D3D12_LOGIC_OP_NOOP;
+		rtblendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+	}
+	else if (m_blendState == BlendState::eAdd) {
+		rtblendDesc.BlendEnable = TRUE;
+		rtblendDesc.LogicOpEnable = FALSE;
+		rtblendDesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
+		rtblendDesc.DestBlend = D3D12_BLEND_ONE;
+		rtblendDesc.BlendOp = D3D12_BLEND_OP_ADD;
+		rtblendDesc.SrcBlendAlpha = D3D12_BLEND_ONE;
+		rtblendDesc.DestBlendAlpha = D3D12_BLEND_ZERO;
+		rtblendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
+		rtblendDesc.LogicOp = D3D12_LOGIC_OP_NOOP;
+		rtblendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+	}
+	else if (m_blendState == BlendState::eLinear) {
+		rtblendDesc.BlendEnable = TRUE;
+		rtblendDesc.LogicOpEnable = FALSE;
+		rtblendDesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
+		rtblendDesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+		rtblendDesc.BlendOp = D3D12_BLEND_OP_ADD;
+		rtblendDesc.SrcBlendAlpha = D3D12_BLEND_ONE;
+		rtblendDesc.DestBlendAlpha = D3D12_BLEND_ZERO;
+		rtblendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
+		rtblendDesc.LogicOp = D3D12_LOGIC_OP_NOOP;
+		rtblendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+	}
 
 	D3D12_BLEND_DESC blendDesc{};
-	blendDesc.AlphaToCoverageEnable = false;
+	blendDesc.AlphaToCoverageEnable = m_blendState != BlendState::eNone ? false : false;
 	blendDesc.IndependentBlendEnable = false;
 	for (UINT i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; i++) {
 		blendDesc.RenderTarget[i] = rtblendDesc;
@@ -87,10 +117,34 @@ void Pipeline::setRasterState(D3D12_FILL_MODE fillMode, D3D12_CULL_MODE cullMode
 	m_rasterDesc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 }
 
+void Pipeline::setBlendState(BlendState blendState) {
+	m_blendState = blendState;
+}
+
 void Pipeline::setVertexShader(IDxcBlob* shader) {
 	m_vertexShader = shader;
 }
 
 void Pipeline::setPixelShader(IDxcBlob* shader) {
 	m_pixelShader = shader;
+}
+
+
+bool ComputePipeline::create(ID3D12Device* device, ID3D12RootSignature* rootSignature) {
+	HRESULT res;
+
+	D3D12_COMPUTE_PIPELINE_STATE_DESC cpsDesc{};
+	cpsDesc.CS = { m_computeShader->GetBufferPointer(), m_computeShader->GetBufferSize() };
+	cpsDesc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
+	cpsDesc.pRootSignature = rootSignature;
+
+	res = device->CreateComputePipelineState(&cpsDesc, IID_PPV_ARGS(m_pipelineState.ReleaseAndGetAddressOf()));
+	if (FAILED(res))
+		return false;
+
+	return true;
+}
+
+void ComputePipeline::setComputeShader(IDxcBlob* blob) {
+	m_computeShader = blob;
 }

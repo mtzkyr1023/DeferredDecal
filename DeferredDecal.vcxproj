@@ -20,6 +20,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="app.hpp" />
+    <ClInclude Include="component\camera.h" />
+    <ClInclude Include="component\collider.h" />
+    <ClInclude Include="component\component.h" />
+    <ClInclude Include="component\renderer.h" />
+    <ClInclude Include="component\transform.h" />
     <ClInclude Include="framework\buffer.h" />
     <ClInclude Include="framework\fence.h" />
     <ClInclude Include="framework\pipeline.h" />
@@ -49,6 +54,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="app.cpp" />
+    <ClCompile Include="component\camera.cpp" />
+    <ClCompile Include="component\collider.cpp" />
+    <ClCompile Include="component\component.cpp" />
+    <ClCompile Include="component\renderer.cpp" />
+    <ClCompile Include="component\transform.cpp" />
     <ClCompile Include="framework\buffer.cpp" />
     <ClCompile Include="framework\commandbuffer.cpp" />
     <ClCompile Include="framework\descriptor_heap.cpp" />
@@ -67,6 +77,7 @@
     <ClCompile Include="imgui_dx12\imgui_impl_win32.cpp" />
     <ClCompile Include="imgui_dx12\imgui_widgets.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="render_pass\render_pass.cpp" />
     <ClCompile Include="tools\input.cpp" />
     <ClCompile Include="tools\mesh_loader.cpp" />
     <ClCompile Include="tools\model.cpp" />

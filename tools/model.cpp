@@ -191,3 +191,20 @@ void Mesh::saveModelCache() {
 	txt.close();
 }
 
+
+
+bool MeshManager::createMeshFromGltf(ID3D12Device* dev, ID3D12CommandQueue* queue,
+	uint32_t bufferCount, const char* filename, bool binary) {
+	if (!m_meshArray[filename]->createFromGltf(dev, queue, bufferCount, filename, binary))
+		return false;
+
+	return true;
+}
+
+void MeshManager::releaseMesh(const char* filename) {
+	m_meshArray.erase(filename);
+}
+
+void MeshManager::allRelease() {
+	m_meshArray.clear();
+}

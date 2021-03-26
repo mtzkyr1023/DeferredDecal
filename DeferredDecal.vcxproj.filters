@@ -31,6 +31,12 @@
     <Filter Include="リソース ファイル\imgui">
       <UniqueIdentifier>{89e63583-b249-4e89-81a0-e07196eeb8dc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ヘッダー ファイル\component">
+      <UniqueIdentifier>{d4dbd423-68dc-4d2d-b475-2d15f4769bb6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\component">
+      <UniqueIdentifier>{7f1f2709-1294-42b5-9d42-3752d69acee8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="app.hpp">
@@ -114,6 +120,21 @@
     <ClInclude Include="tools\my_gui.h">
       <Filter>リソース ファイル\tools</Filter>
     </ClInclude>
+    <ClInclude Include="component\component.h">
+      <Filter>ヘッダー ファイル\component</Filter>
+    </ClInclude>
+    <ClInclude Include="component\transform.h">
+      <Filter>ヘッダー ファイル\component</Filter>
+    </ClInclude>
+    <ClInclude Include="component\camera.h">
+      <Filter>ヘッダー ファイル\component</Filter>
+    </ClInclude>
+    <ClInclude Include="component\renderer.h">
+      <Filter>ヘッダー ファイル\component</Filter>
+    </ClInclude>
+    <ClInclude Include="component\collider.h">
+      <Filter>ヘッダー ファイル\component</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="app.cpp">
@@ -184,6 +205,24 @@
     </ClCompile>
     <ClCompile Include="tools\my_gui.cpp">
       <Filter>リソース ファイル\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="render_pass\render_pass.cpp">
+      <Filter>ソース ファイル\render_pass</Filter>
+    </ClCompile>
+    <ClCompile Include="component\component.cpp">
+      <Filter>ソース ファイル\component</Filter>
+    </ClCompile>
+    <ClCompile Include="component\transform.cpp">
+      <Filter>ソース ファイル\component</Filter>
+    </ClCompile>
+    <ClCompile Include="component\camera.cpp">
+      <Filter>ソース ファイル\component</Filter>
+    </ClCompile>
+    <ClCompile Include="component\renderer.cpp">
+      <Filter>ソース ファイル\component</Filter>
+    </ClCompile>
+    <ClCompile Include="component\collider.cpp">
+      <Filter>ソース ファイル\component</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

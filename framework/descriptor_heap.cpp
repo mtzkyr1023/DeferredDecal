@@ -18,3 +18,16 @@ bool DescriptorHeap::create(ID3D12Device* device, D3D12_DESCRIPTOR_HEAP_TYPE hea
 
 	return true;
 }
+
+
+D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeap::getCpuHandle(UINT num) {
+	auto handle = m_descHeap->GetCPUDescriptorHandleForHeapStart();
+	handle.ptr += m_descriptorSize * num;
+	return handle;
+}
+
+D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHeap::getGpuHandle(UINT num) {
+	auto handle = m_descHeap->GetGPUDescriptorHandleForHeapStart();
+	handle.ptr += m_descriptorSize * num;
+	return handle;
+}

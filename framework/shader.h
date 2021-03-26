@@ -16,6 +16,7 @@ public:
 
 	bool createVertexShader(const wchar_t* filename);
 	bool createPixelShader(const wchar_t* filename);
+	bool createComputeShader(const wchar_t* filename);
 
 	IDxcBlob* getByteCode() { return m_bytecode.Get(); }
 

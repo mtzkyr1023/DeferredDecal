@@ -11,12 +11,11 @@ struct PS_IN {
 
 struct PS_OUT {
 	float4 color : SV_Target0;
-	float4 normal : SV_Target1;
 };
 
 PS_OUT main(PS_IN input) {
 	PS_OUT output = (PS_OUT)0;
 	output.color = albedoTex.Sample(wrapSampler, input.tex);
-	output.normal = float4(input.nor, input.viewDistance);
+	clip(output.color.a - 0.001f);
 	return output;
 }

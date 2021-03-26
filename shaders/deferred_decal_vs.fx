@@ -25,7 +25,8 @@ struct VS_IN {
 
 struct VS_OUT {
 	float4 pos : SV_POSITION;
-	uint instanceID : TEXCOORD0;
+	float3 zVec : TEXCOORD0;
+	uint instanceID : TEXCOORD1;
 };
 
 VS_OUT main(VS_IN input, uint instanceID : SV_InstanceID) {
@@ -36,6 +37,11 @@ VS_OUT main(VS_IN input, uint instanceID : SV_InstanceID) {
 	output.pos = mul(output.pos, proj);
 	
 	output.instanceID = instanceID;
+	
+	output.zVec =
+		normalize(float3(SB0[instanceID].world[2][0],
+				SB0[instanceID].world[2][1],
+				SB0[instanceID].world[2][2]));
 	
 	return output;
 }

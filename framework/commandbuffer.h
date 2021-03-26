@@ -12,6 +12,7 @@ public:
 	~CommandAllocator() = default;
 
 	bool createGraphicsCommandAllocator(ID3D12Device* device);
+	bool createComputeCommandAllocator(ID3D12Device* device);
 
 	ID3D12CommandAllocator* getCommandAllocator() { return m_commandAllocator.Get(); }
 
@@ -24,7 +25,8 @@ public:
 	CommandList() = default;
 	~CommandList() = default;
 
-	bool createGraphicsCommandList(ID3D12Device* device, ID3D12CommandAllocator* commandPool);
+	bool createGraphicsCommandList(ID3D12Device* device, ID3D12CommandAllocator* commandAllocator);
+	bool createComputeCommandList(ID3D12Device* device, ID3D12CommandAllocator* commandAllocator);
 
 	ID3D12GraphicsCommandList* getCommandList() { return m_commandList.Get(); }
 

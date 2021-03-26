@@ -16,17 +16,17 @@ struct PerInstance {
 
 StructuredBuffer<PerInstance> SB0 : register(t0);
 Texture2D depthTex : register(t1);
-Texture2D decalTex : register(t2);
+Texture3D decalTex : register(t2);
 SamplerState clampSampler : register(s0);
 
 struct PS_IN {
 	float4 pos : SV_POSITION;
-	uint instanceID : TEXCOORD0;
+	float3 zVec : TEXCOORD0;
+	uint instanceID : TEXCOORD1;
 };
 
 struct PS_OUT {
 	float4 color : SV_Target0;
-	
 };
 
 PS_OUT main(PS_IN input) {
@@ -54,9 +54,16 @@ PS_OUT main(PS_IN input) {
 	
 	float2 tex = float2(0.5f, 0.5f) + worldPos.xy;
 	
-	output.color = decalTex.Sample(clampSampler, tex);
+	float3 tpos = float3(0.5f, 0.5f, 0.5f) + worldPos.xyz;
 	
-	clip(output.color.a - 0.001f);
+	output.color = float4(decalTex.Sample(clampSampler, tpos).r, 0.0f, 0.0f, 1.0f);
+	
+	float mask = saturate(dot(-normal, input.zVec));
+	float2 shadow = tex * float2(0.5f, -0.5f) - float2(0.25f, -0.25f);
+	float vigent = 1.0f - length(shadow);
+	shadow.y = 0.25f - abs(shadow.y);
+	
+	output.color.a = 1.0f;
 	
 	return output;
 }

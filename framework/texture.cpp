@@ -20,7 +20,7 @@ bool Texture::createBackBuffer(ID3D12Device* device, IDXGISwapChain3* swapchain,
 	return true;
 }
 
-bool Texture::createRenderTarget2D(ID3D12Device* device, UINT textureCount, DXGI_FORMAT format,
+bool Texture::createRenderTarget2D(ID3D12Device* device, UINT textureCount, D3D12_RESOURCE_FLAGS flags, DXGI_FORMAT format,
 	UINT width, UINT height) {
 	HRESULT res;
 
@@ -44,7 +44,7 @@ bool Texture::createRenderTarget2D(ID3D12Device* device, UINT textureCount, DXGI
 		resDesc.Format = format;
 		resDesc.SampleDesc.Count = 1;
 		resDesc.SampleDesc.Quality = 0;
-		resDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+		resDesc.Flags = flags;
 		resDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 
 		D3D12_CLEAR_VALUE clearValue{};
@@ -56,6 +56,43 @@ bool Texture::createRenderTarget2D(ID3D12Device* device, UINT textureCount, DXGI
 
 		res = device->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_COMMON,
 			&clearValue, IID_PPV_ARGS(m_resource[i].ReleaseAndGetAddressOf()));
+		if (FAILED(res)) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool Texture::createRenderTarget3D(ID3D12Device* device, UINT textureCount, D3D12_RESOURCE_FLAGS flag, DXGI_FORMAT format,
+	UINT width, UINT height, UINT depth) {
+	HRESULT res;
+
+	m_resource.resize(textureCount);
+
+	for (UINT i = 0; i < textureCount; i++) {
+		D3D12_HEAP_PROPERTIES heapProp{};
+		heapProp.Type = D3D12_HEAP_TYPE_DEFAULT;
+		heapProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+		heapProp.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+		heapProp.CreationNodeMask = 1;
+		heapProp.VisibleNodeMask = 1;
+
+		D3D12_RESOURCE_DESC resDesc{};
+		resDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE3D;
+		resDesc.Alignment = 0;
+		resDesc.Width = width;
+		resDesc.Height = height;
+		resDesc.DepthOrArraySize = depth;
+		resDesc.MipLevels = 0;
+		resDesc.Format = format;
+		resDesc.SampleDesc.Count = 1;
+		resDesc.SampleDesc.Quality = 0;
+		resDesc.Flags = flag;
+		resDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+
+		res = device->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_COMMON,
+			nullptr, IID_PPV_ARGS(m_resource[i].ReleaseAndGetAddressOf()));
 		if (FAILED(res)) {
 			return false;
 		}

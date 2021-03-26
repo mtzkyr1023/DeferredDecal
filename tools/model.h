@@ -5,12 +5,14 @@
 #include "../framework/texture.h"
 
 #include <unordered_map>
-
+#include <memory>
 
 #include "../glm-master/glm/glm.hpp"
 #include "../glm-master/glm/gtc/matrix_transform.hpp"
 #include "../glm-master/glm/gtc/quaternion.hpp"
 
+
+#define DEFAULT_MESH "models/cube.gltf"
 
 
 class Mesh {
@@ -107,6 +109,34 @@ private:
 	std::vector<uint32_t> m_indexArray;
 };
 	
+
+class MeshManager {
+private:
+	MeshManager() = default;
+	~MeshManager() = default;
+
+public:
+	static MeshManager& instance() {
+		static MeshManager inst;
+		return inst;
+	}
+
+	bool createMeshFromGltf(ID3D12Device* dev, ID3D12CommandQueue* queue,
+		uint32_t bufferCount, const char* filename, bool binary = false);
+
+	void releaseMesh(const char* filename);
+	void allRelease();
+
+	Mesh* getMesh(const char* filename) {
+		if (m_meshArray.find(filename) != m_meshArray.end())
+			return m_meshArray[filename].get();
+
+		return nullptr;
+	}
+
+private:
+	std::unordered_map<std::string, std::unique_ptr<Mesh>> m_meshArray;
+};
 
 
 #endif
