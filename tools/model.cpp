@@ -1,5 +1,6 @@
 #include "model.h"
 #include "mesh_loader.h"
+#include "xatlas.h"
 
 #include <fstream>
 
@@ -65,6 +66,8 @@ bool Mesh::createFromGltf(ID3D12Device* dev, ID3D12CommandQueue* queue, uint32_t
 
 	for (uint32_t i = 0; i < m_vertexArray.size(); i++) {
 		m_posArray.push_back(m_vertexArray[i].pos);
+		m_norArray.push_back(m_vertexArray[i].nor);
+		m_texcoord.push_back(m_vertexArray[i].tex);
 	}
 	for (uint32_t i = 0; i < index.size(); i++) {
 		m_indexArray.push_back(index[i]);
@@ -91,6 +94,9 @@ bool Mesh::createFromGltf(ID3D12Device* dev, ID3D12CommandQueue* queue, uint32_t
 
 	m_allIndexCount = (UINT)index.size();
 	m_allVertexCount = (UINT)m_vertexArray.size();
+
+	if (!calculateUV(dev))
+		return false;
 
 	saveModelCache();
 
@@ -145,13 +151,16 @@ bool Mesh::loadModelCache(ID3D12Device* device, ID3D12CommandQueue* queue, uint3
 		vector<unsigned char>().swap(m_imageDatas[i]);
 	}
 
+	m_texcoord.resize(m_indexArray.size());
+	ifs.read((char*)m_texcoord.data(), sizeof(glm::vec2) * m_texcoord.size());
+
 	ifs.close();
 
 	return true;
 }
 
 void Mesh::saveModelCache() {
-	
+
 	ofstream ofs;
 	ofstream txt;
 	string textFilename = m_filename + ".txt";
@@ -187,10 +196,61 @@ void Mesh::saveModelCache() {
 		txt << "	height:" << m_imageHeights[i] << endl;
 	}
 
+	ofs.write((const char*)m_texcoord.data(), sizeof(glm::vec2) * m_texcoord.size());
+
 	ofs.close();
 	txt.close();
 }
 
+
+bool Mesh::calculateUV(ID3D12Device* dev) {
+	xatlas::MeshDecl decl{};
+	decl.indexCount = m_indexArray.size();
+	decl.indexData = m_indexArray.data();
+	decl.indexFormat = xatlas::IndexFormat::UInt32;
+	decl.vertexCount = m_vertexArray.size();
+	decl.vertexPositionData = m_posArray.data();
+	decl.vertexPositionStride = sizeof(glm::vec3);
+	decl.vertexNormalData = m_norArray.data();
+	decl.vertexNormalStride = sizeof(glm::vec3);
+	decl.vertexUvStride = sizeof(glm::vec2);
+	decl.vertexUvData = m_texcoord.data();
+	xatlas::Atlas* atlas = xatlas::Create();
+	xatlas::AddMesh(atlas, decl, 0);
+	xatlas::ChartOptions chartOpt{};
+	chartOpt.fixWinding = false;
+	chartOpt.useInputMeshUvs = true;
+	xatlas::PackOptions packOpt{};
+	packOpt.bilinear = true;
+	packOpt.bruteForce = false;
+	packOpt.resolution = 0;
+	packOpt.texelsPerUnit = 0.0f;
+	packOpt.padding = 0;
+	xatlas::Generate(atlas);
+
+	xatlas::Mesh& mesh = atlas->meshes[0];
+	m_texcoord.resize(mesh.indexCount);
+	for (uint32_t i = 0; i < m_allIndexCount; i += 3) {
+		m_texcoord[i + 0].x = mesh.vertexArray[mesh.indexArray[i + 0]].uv[0];
+		m_texcoord[i + 1].x = mesh.vertexArray[mesh.indexArray[i + 1]].uv[0];
+		m_texcoord[i + 2].x = mesh.vertexArray[mesh.indexArray[i + 2]].uv[0];
+		m_texcoord[i + 0].y = mesh.vertexArray[mesh.indexArray[i + 0]].uv[1];
+		m_texcoord[i + 1].y = mesh.vertexArray[mesh.indexArray[i + 1]].uv[1];
+		m_texcoord[i + 2].y = mesh.vertexArray[mesh.indexArray[i + 2]].uv[1];
+	}
+
+	xatlas::Destroy(atlas);
+
+	vector<glm::vec4> tex;
+	for (uint32_t i = 0; i < m_texcoord.size(); i++) {
+		tex.push_back(glm::vec4(m_texcoord[i], 0.0f, 0.0f));
+	}
+
+	if (!m_uvBuffer.create(dev, 1, tex.size(), false))
+		return false;
+
+	return true;
+}
 
 
 bool MeshManager::createMeshFromGltf(ID3D12Device* dev, ID3D12CommandQueue* queue,

@@ -57,8 +57,12 @@ bool Pipeline::create(ID3D12Device* device, ID3D12RootSignature* rootSignature) 
 	gpsDesc.RasterizerState = m_rasterDesc;
 	gpsDesc.BlendState = blendDesc;
 	gpsDesc.DepthStencilState.DepthEnable = m_depthEnable;
-	gpsDesc.DepthStencilState.StencilEnable = FALSE;
+	gpsDesc.DepthStencilState.StencilEnable = m_stencilEnable;
 	gpsDesc.DepthStencilState.DepthFunc = m_depthFunc;
+	gpsDesc.DepthStencilState.FrontFace = m_frontFace;
+	gpsDesc.DepthStencilState.BackFace = m_backFace;
+	gpsDesc.DepthStencilState.StencilReadMask = m_readMask;
+	gpsDesc.DepthStencilState.StencilWriteMask = m_writeMask;
 	gpsDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
 	gpsDesc.SampleMask = UINT_MAX;
 	gpsDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
@@ -101,6 +105,29 @@ void Pipeline::setDepthStencilFormat(DXGI_FORMAT format) {
 void Pipeline::setDepthState(bool depthEnable, D3D12_COMPARISON_FUNC func) {
 	m_depthFunc = func;
 	m_depthEnable = depthEnable;
+}
+
+void Pipeline::setStencilEnable(bool stencilEnable) {
+	m_stencilEnable = stencilEnable;
+}
+
+void Pipeline::setStencilStateFront(D3D12_STENCIL_OP stencilDepthFail, D3D12_STENCIL_OP stencilFail, D3D12_STENCIL_OP pass, D3D12_COMPARISON_FUNC func) {
+	m_frontFace.StencilDepthFailOp = stencilDepthFail;
+	m_frontFace.StencilFailOp = stencilFail;
+	m_frontFace.StencilPassOp = pass;
+	m_frontFace.StencilFunc = func;
+}
+
+void Pipeline::setStencilStateBack(D3D12_STENCIL_OP stencilDepthFail, D3D12_STENCIL_OP stencilFail, D3D12_STENCIL_OP pass, D3D12_COMPARISON_FUNC func) {
+	m_backFace.StencilDepthFailOp = stencilDepthFail;
+	m_backFace.StencilFailOp = stencilFail;
+	m_backFace.StencilPassOp = pass;
+	m_backFace.StencilFunc = func;
+}
+
+void Pipeline::setStencilMask(UINT8 readMask, UINT8 writeMask) {
+	m_readMask = readMask;
+	m_writeMask = writeMask;
 }
 
 void Pipeline::setRasterState(D3D12_FILL_MODE fillMode, D3D12_CULL_MODE cullMode) {

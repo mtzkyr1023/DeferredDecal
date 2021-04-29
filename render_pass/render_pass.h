@@ -15,6 +15,13 @@
 #include <unordered_map>
 #include <memory>
 
+static const char* BACK_BUFFER = "back_buffer";
+static const char* ALBEDO_BUFFER = "albedo_bufer";
+static const char* NORMAL_BUFFER = "normal_buffer";
+static const char* PBR_BUFFER = "pbr_buffer";
+static const char* DEPTH_BUFFER = "depth_buffer";
+static const char* SAMPLE_TEXTURE = "sample_texture";
+
 class RenderPass {
 public:
 	virtual ~RenderPass() = default;
@@ -26,7 +33,8 @@ public:
 protected:
 	RootSignature m_rootSignature;
 	Pipeline m_pipeline;
-	UINT m_backBufferCount;
+	UINT m_width;
+	UINT m_height;
 };
 
 
@@ -42,6 +50,7 @@ public:
 	}
 
 	bool createBackBuffer(const char* name, ID3D12Device* device, IDXGISwapChain3* swapchain, UINT backBufferCount);
+	bool createDepthStencilBuffer(const char* name, ID3D12Device* device, UINT textureCount, UINT width, UINT height, bool isStencil);
 	bool createRenderTarget2D(const char* name, ID3D12Device* device, UINT resourceCount, D3D12_RESOURCE_FLAGS flags, DXGI_FORMAT format, UINT width, UINT height);
 	bool createTexture(const char* name, ID3D12Device* device, ID3D12CommandQueue* queue, UINT resourceCount, DXGI_FORMAT format,
 		const char* filename, bool isMipmap);

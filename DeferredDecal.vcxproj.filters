@@ -37,6 +37,18 @@
     <Filter Include="ソース ファイル\component">
       <UniqueIdentifier>{7f1f2709-1294-42b5-9d42-3752d69acee8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ヘッダー ファイル\system">
+      <UniqueIdentifier>{3e007ed1-a068-4b2f-89aa-389ce1d23e27}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\system">
+      <UniqueIdentifier>{f5b4ad57-89b6-4282-9989-0757803e557d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\scene">
+      <UniqueIdentifier>{8a96e952-8238-4d29-b226-3c4b2d8e9a2d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\scene">
+      <UniqueIdentifier>{7f86dcdc-a5dd-4b4a-98ea-638f496a474d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="app.hpp">
@@ -135,6 +147,21 @@
     <ClInclude Include="component\collider.h">
       <Filter>ヘッダー ファイル\component</Filter>
     </ClInclude>
+    <ClInclude Include="system\oct_tree.h">
+      <Filter>ヘッダー ファイル\system</Filter>
+    </ClInclude>
+    <ClInclude Include="tools\xatlas.h">
+      <Filter>リソース ファイル\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="render_pass\last_pass.h">
+      <Filter>ヘッダー ファイル\render_pass</Filter>
+    </ClInclude>
+    <ClInclude Include="scene\scene.h">
+      <Filter>ヘッダー ファイル\scene</Filter>
+    </ClInclude>
+    <ClInclude Include="scene\sample_scene.h">
+      <Filter>ヘッダー ファイル\scene</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="app.cpp">
@@ -223,6 +250,21 @@
     </ClCompile>
     <ClCompile Include="component\collider.cpp">
       <Filter>ソース ファイル\component</Filter>
+    </ClCompile>
+    <ClCompile Include="tools\xatlas.cpp">
+      <Filter>リソース ファイル\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="render_pass\last_pass.cpp">
+      <Filter>ソース ファイル\render_pass</Filter>
+    </ClCompile>
+    <ClCompile Include="render_pass\geometory_pass.cpp">
+      <Filter>ソース ファイル\render_pass</Filter>
+    </ClCompile>
+    <ClCompile Include="scene\scene.cpp">
+      <Filter>ソース ファイル\scene</Filter>
+    </ClCompile>
+    <ClCompile Include="scene\sample_scene.cpp">
+      <Filter>ソース ファイル\scene</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -1,7 +1,0 @@
-MaterialCount:2
-AllVertexCount:35319
-AllIndexCount:133284
-ImageCount:1
-image[0]:
-	width:2048
-	height:2048

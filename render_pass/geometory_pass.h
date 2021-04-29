@@ -4,6 +4,11 @@
 
 #include "render_pass.h"
 
+#include "../component/renderer.h"
+#include "../component/camera.h"
+
+#include "../tools/model.h"
+
 class GeometoryPass : public RenderPass {
 public:
 	GeometoryPass() = default;
@@ -16,7 +21,25 @@ public:
 	void run(UINT curImageCount);
 
 private:
+	struct CB0 {
+		glm::mat4 view;
+		glm::mat4 proj;
+		glm::mat4 padding1;
+		glm::mat4 padding2;
+	};
 
+private:
+	Shader m_vs;
+	Shader m_ps;
+
+	DescriptorHeap m_cbvHeap;
+	DescriptorHeap m_samplerHeap;
+	DescriptorHeap m_rtvHeap;
+	DescriptorHeap m_dsvHeap;
+
+	ConstantBuffer<CB0> m_cb0;
+
+	Mesh m_mesh;
 };
 
 

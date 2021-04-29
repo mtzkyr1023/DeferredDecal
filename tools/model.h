@@ -25,6 +25,7 @@ public:
 
 	VertexBuffer* getVertexBuffer() { return &m_vertexBuffer; }
 	IndexBuffer* getIndexBuffer() { return &m_indexBuffer; }
+	StructuredBuffer<glm::vec4>* getUVBuffer() { return &m_uvBuffer; }
 
 	uint32_t getAllIndexCount() { return m_allIndexCount; }
 
@@ -65,6 +66,8 @@ public:
 	std::vector<glm::vec3>& getPosArray() { return m_posArray; }
 	std::vector<uint32_t>& getIndexArray() { return m_indexArray; }
 
+	bool calculateUV(ID3D12Device* dev);
+
 private:
 	bool loadModelCache(ID3D12Device* device, ID3D12CommandQueue* queue, uint32_t bufferCount);
 	void saveModelCache();
@@ -81,6 +84,8 @@ private:
 private:
 	VertexBuffer m_vertexBuffer;
 	IndexBuffer m_indexBuffer;
+
+	StructuredBuffer<glm::vec4> m_uvBuffer;
 
 	std::string m_filename;
 
@@ -106,7 +111,10 @@ private:
 	glm::vec3 m_max;
 
 	std::vector<glm::vec3> m_posArray;
+	std::vector<glm::vec3> m_norArray;
 	std::vector<uint32_t> m_indexArray;
+
+	std::vector<glm::vec2> m_texcoord;
 };
 	
 

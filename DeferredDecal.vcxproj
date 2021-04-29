@@ -46,11 +46,16 @@
     <ClInclude Include="imgui_dx12\imstb_textedit.h" />
     <ClInclude Include="imgui_dx12\imstb_truetype.h" />
     <ClInclude Include="render_pass\geometory_pass.h" />
+    <ClInclude Include="render_pass\last_pass.h" />
     <ClInclude Include="render_pass\render_pass.h" />
+    <ClInclude Include="scene\sample_scene.h" />
+    <ClInclude Include="scene\scene.h" />
+    <ClInclude Include="system\oct_tree.h" />
     <ClInclude Include="tools\input.h" />
     <ClInclude Include="tools\mesh_loader.h" />
     <ClInclude Include="tools\model.h" />
     <ClInclude Include="tools\my_gui.h" />
+    <ClInclude Include="tools\xatlas.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="app.cpp" />
@@ -77,11 +82,16 @@
     <ClCompile Include="imgui_dx12\imgui_impl_win32.cpp" />
     <ClCompile Include="imgui_dx12\imgui_widgets.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="render_pass\geometory_pass.cpp" />
+    <ClCompile Include="render_pass\last_pass.cpp" />
     <ClCompile Include="render_pass\render_pass.cpp" />
+    <ClCompile Include="scene\sample_scene.cpp" />
+    <ClCompile Include="scene\scene.cpp" />
     <ClCompile Include="tools\input.cpp" />
     <ClCompile Include="tools\mesh_loader.cpp" />
     <ClCompile Include="tools\model.cpp" />
     <ClCompile Include="tools\my_gui.cpp" />
+    <ClCompile Include="tools\xatlas.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

@@ -15,7 +15,7 @@ public:
 
 	bool create(ID3D12Device* device, D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlag);
 
-	void addDeDescriptorCount(D3D12_SHADER_VISIBILITY shaderVisiblity, D3D12_DESCRIPTOR_RANGE_TYPE descType, UINT baseShaderRegister, UINT count);
+	void addDescriptorCount(D3D12_SHADER_VISIBILITY shaderVisiblity, D3D12_DESCRIPTOR_RANGE_TYPE descType, UINT baseShaderRegister, UINT count);
 
 	ID3D12RootSignature* getRootSignature() { return m_rootSignature.Get(); }
 

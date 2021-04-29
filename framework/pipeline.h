@@ -26,6 +26,10 @@ public:
 	void setDepthStencilFormat(DXGI_FORMAT format);
 	void setDepthState(bool depthEnable, D3D12_COMPARISON_FUNC func);
 	void setRasterState(D3D12_FILL_MODE fillMode, D3D12_CULL_MODE cullMode);
+	void setStencilEnable(bool stencilEnable);
+	void setStencilStateFront(D3D12_STENCIL_OP stencilDepthFail, D3D12_STENCIL_OP stencilFail, D3D12_STENCIL_OP pass, D3D12_COMPARISON_FUNC func);
+	void setStencilStateBack(D3D12_STENCIL_OP stencilDepthFail, D3D12_STENCIL_OP stencilFail, D3D12_STENCIL_OP pass, D3D12_COMPARISON_FUNC func);
+	void setStencilMask(UINT8 readMask, UINT8 writeMask);
 	void setBlendState(BlendState blendState);
 	void setVertexShader(IDxcBlob* blob);
 	void setPixelShader(IDxcBlob* blob);
@@ -38,11 +42,16 @@ private:
 	D3D12_RASTERIZER_DESC m_rasterDesc;
 	D3D12_COMPARISON_FUNC m_depthFunc;
 	bool m_depthEnable;
+	bool m_stencilEnable;
+	D3D12_DEPTH_STENCILOP_DESC m_frontFace;
+	D3D12_DEPTH_STENCILOP_DESC m_backFace;
 	std::vector<DXGI_FORMAT> m_rtvFormat;
 	DXGI_FORMAT m_depthStencilFormat;
 	BlendState m_blendState = BlendState::eNone;
 	IDxcBlob* m_vertexShader;
 	IDxcBlob* m_pixelShader;
+	UINT8 m_readMask;
+	UINT8 m_writeMask;
 };
 
 

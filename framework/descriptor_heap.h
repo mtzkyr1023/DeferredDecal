@@ -16,6 +16,8 @@ public:
 	D3D12_CPU_DESCRIPTOR_HANDLE getCpuHandle(UINT num);
 	D3D12_GPU_DESCRIPTOR_HANDLE getGpuHandle(UINT num);
 
+	UINT getDescriptorSize() { return m_descriptorSize; }
+
 private:
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_descHeap;
 	UINT m_descriptorSize;

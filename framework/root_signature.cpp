@@ -42,7 +42,7 @@ bool RootSignature::create(ID3D12Device* device, D3D12_ROOT_SIGNATURE_FLAGS root
 	return true;
 }
 
-void RootSignature::addDeDescriptorCount(D3D12_SHADER_VISIBILITY shaderVisiblity, D3D12_DESCRIPTOR_RANGE_TYPE descType, UINT baseShaderRegister, UINT count) {
+void RootSignature::addDescriptorCount(D3D12_SHADER_VISIBILITY shaderVisiblity, D3D12_DESCRIPTOR_RANGE_TYPE descType, UINT baseShaderRegister, UINT count) {
 	D3D12_DESCRIPTOR_RANGE descRange{};
 	descRange.RangeType = descType;
 	descRange.NumDescriptors = count;

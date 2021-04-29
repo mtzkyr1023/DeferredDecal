@@ -9,6 +9,22 @@ bool ResourceManager::createBackBuffer(const char* name, ID3D12Device* device, I
 	return true;
 }
 
+
+bool ResourceManager::createDepthStencilBuffer(const char* name, ID3D12Device* device, UINT textureCount, UINT width, UINT height, bool isStencil) {
+	m_resourceArray[name] = std::make_unique<Texture>();
+	if (isStencil) {
+		if (!static_cast<Texture*>(m_resourceArray[name].get())->createDepthStencilBuffer(device, textureCount, DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS, width, height))
+			return false;
+	}
+	else {
+		if (!static_cast<Texture*>(m_resourceArray[name].get())->createDepthStencilBuffer(device, textureCount, DXGI_FORMAT_R32_FLOAT, width, height))
+			return false;
+	}
+
+	return true;
+}
+
+
 bool ResourceManager::createRenderTarget2D(const char* name, ID3D12Device* device, UINT resourceCount, D3D12_RESOURCE_FLAGS flags,
 	DXGI_FORMAT format, UINT width, UINT height) {
 	m_resourceArray[name] = std::make_unique<Texture>();
