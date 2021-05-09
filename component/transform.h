@@ -11,10 +11,9 @@
 class Transform : public Component {
 public:
 	Transform();
-	Transform(glm::vec3 pos, glm::vec3 rotate, glm::vec3 scale);
 	~Transform();
 
-	void execute();
+	void execute(float deltaTime);
 
 	glm::vec3 position;
 	glm::vec3 rotation;

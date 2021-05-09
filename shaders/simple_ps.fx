@@ -7,12 +7,17 @@ struct PS_IN {
 
 struct PS_OUT {
 	float4 color : SV_Target0;
+	float4 normal : SV_Target1;
+	float2 pbr : SV_Target2;
 };
 
 PS_OUT main(PS_IN input) {
 	PS_OUT output = (PS_OUT)0;
-	float intensity = saturate(dot(input.nor, normalize(float3(1.0f, 1.0f, 1.0f)))) * 0.5f + 0.5f;
-	intensity *= intensity;
 	output.color = float4(1.0f, 1.0f, 1.0f, 1.0f);
+	
+	output.normal = float4(input.nor, input.viewDistance);
+	
+	output.pbr = float2(1.0f, 1.0f);
+	
 	return output;
 }

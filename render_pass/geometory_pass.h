@@ -20,13 +20,7 @@ public:
 
 	void run(UINT curImageCount);
 
-private:
-	struct CB0 {
-		glm::mat4 view;
-		glm::mat4 proj;
-		glm::mat4 padding1;
-		glm::mat4 padding2;
-	};
+	bool setDescriptorHeap(ID3D12Device* device, UINT backBufferCount);
 
 private:
 	Shader m_vs;
@@ -37,7 +31,8 @@ private:
 	DescriptorHeap m_rtvHeap;
 	DescriptorHeap m_dsvHeap;
 
-	ConstantBuffer<CB0> m_cb0;
+	std::vector<ConstantBuffer> m_cb1Array;
+	std::list<SimpleMeshRenderer*> m_simpleMeshRendererList;
 
 	Mesh m_mesh;
 };

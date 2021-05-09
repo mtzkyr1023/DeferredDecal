@@ -10,7 +10,11 @@ public:
 
 	void init();
 
-	void run();
+	void run(uint32_t curImageIndex, float deltaTime);
+
+private:
+	uint32_t m_camera;
+	uint32_t m_cube;
 };
 
 #endif

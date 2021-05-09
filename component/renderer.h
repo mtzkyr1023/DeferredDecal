@@ -19,12 +19,12 @@ public:
 	int layer = 1;
 };
 
-class MeshRenderer : public Renderer {
+class SimpleMeshRenderer : public Renderer {
 public:
-	MeshRenderer() = default;
-	~MeshRenderer() = default;
+	SimpleMeshRenderer() = default;
+	~SimpleMeshRenderer() = default;
 
-	void execute() {}
+	void execute(float deltaTime) {}
 };
 
 #endif

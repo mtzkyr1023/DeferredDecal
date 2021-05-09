@@ -18,6 +18,8 @@
 #include "render_pass/geometory_pass.h"
 #include "render_pass/last_pass.h"
 
+#include "scene/sample_scene.h"
+
 #include "glm-master/glm/glm.hpp"
 #include "glm-master/glm/gtc/matrix_transform.hpp"
 #include "glm-master/glm/gtc/quaternion.hpp"
@@ -48,6 +50,8 @@ private:
 	Fence m_fence;
 
 	MyGui m_gui;
+
+	SampleScene m_scene;
 
 	static const UINT m_width = 1280;
 	static const UINT m_height = 720;

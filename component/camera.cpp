@@ -22,7 +22,7 @@ Camera::~Camera() {
 
 }
 
-void Camera::execute() {
+void Camera::execute(float deltaTime) {
 	Transform* transform = parent->getComponent<Transform>();
 	glm::vec3 vecY = glm::normalize(glm::vec3(transform->matrix[1][0], transform->matrix[1][1], transform->matrix[1][2]));
 	glm::vec3 vecZ = glm::normalize(glm::vec3(transform->matrix[2][0], transform->matrix[2][1], transform->matrix[2][2]));
@@ -160,7 +160,7 @@ void Camera::frustumTest() {
 	std::vector<GameObject*>* objectArray = Scheduler::instance().getObjectPerLayer(m_layer);
 	for (auto& ite : (*objectArray)) {
 		Transform* trans = ite->getComponent<Transform>();
-		MeshRenderer* renderer = ite->getComponent<MeshRenderer>();
+		SimpleMeshRenderer* renderer = ite->getComponent<SimpleMeshRenderer>();
 		Mesh* mesh = renderer->mesh;
 		glm::vec3 size = (mesh->getMax() - mesh->getMin()) * trans->scale;
 

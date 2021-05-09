@@ -33,7 +33,7 @@ private:
 	std::vector<D3D12_INDEX_BUFFER_VIEW> m_indexBufferView;
 };
 
-template<class T>
+
 class ConstantBuffer : public Resource {
 public:
 	ConstantBuffer() = default;
@@ -42,7 +42,7 @@ public:
 			ite->Unmap(0, nullptr);
 	}
 
-	bool create(ID3D12Device* device, UINT bufferCount) {
+	bool create(ID3D12Device* device, UINT size, UINT bufferCount) {
 		HRESULT res;
 
 		m_resource.resize(bufferCount);
@@ -59,7 +59,7 @@ public:
 			D3D12_RESOURCE_DESC resDesc{};
 			resDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 			resDesc.Alignment = 0;
-			resDesc.Width = sizeof(T);
+			resDesc.Width = size;
 			resDesc.Height = 1;
 			resDesc.DepthOrArraySize = 1;
 			resDesc.MipLevels = 1;
@@ -85,14 +85,13 @@ public:
 		memcpy_s(m_constantBufferPtr[bufferNum], size, data, size);
 	}
 
-	T* getBuffer(UINT num) { return m_constantBufferPtr[num]; }
+	BYTE* getBuffer(UINT num) { return m_constantBufferPtr[num]; }
 
 private:
-	std::vector<T*> m_constantBufferPtr;
+	std::vector<BYTE*> m_constantBufferPtr;
 };
 
 
-template<class T>
 class StructuredBuffer : public Resource {
 public:
 	StructuredBuffer() = default;
@@ -103,7 +102,7 @@ public:
 		}
 	}
 
-	bool create(ID3D12Device* device, UINT bufferCount, UINT elementCount, bool isCpuAccess) {
+	bool create(ID3D12Device* device, UINT stride, UINT bufferCount, UINT elementCount, bool isCpuAccess) {
 		HRESULT res;
 
 		m_resource.resize(bufferCount);
@@ -123,7 +122,7 @@ public:
 				D3D12_RESOURCE_DESC resDesc{};
 				resDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 				resDesc.Alignment = 0;
-				resDesc.Width = sizeof(T) * elementCount;
+				resDesc.Width = stride * elementCount;
 				resDesc.Height = 1;
 				resDesc.DepthOrArraySize = 1;
 				resDesc.MipLevels = 1;
@@ -150,10 +149,10 @@ public:
 		memcpy_s(m_bufferPtr[bufferNum], size, data, size);
 	}
 
-	T* getBuffer(UINT num) { return m_bufferPtr[num]; }
+	BYTE* getBuffer(UINT num) { return m_bufferPtr[num]; }
 
 private:
-	std::vector<T*> m_bufferPtr;
+	std::vector<BYTE*> m_bufferPtr;
 	bool m_isCpuAccess = false;
 };
 

@@ -31,9 +31,9 @@ class Component {
 public:
 	virtual ~Component() = default;
 
-	virtual void execute() = 0;
+	virtual void execute(float deltaTime) = 0;
 
-	bool enabled = false;
+	bool enabled = true;
 
 	GameObject* parent = nullptr;
 };
@@ -46,11 +46,11 @@ public:
 
 	template<class T>
 	T* addComponent() {
-		T* component = new T;
-		m_components[GetComponentID<T>()].push_back(std::make_unique<T>(component));
+		std::shared_ptr<T> component = std::make_shared<T>();
+		m_components[GetComponentID<T>()].push_back(component);
 		component->parent = this;
 
-		return component;
+		return component.get();
 	}
 
 	template<class T>
@@ -67,7 +67,7 @@ public:
 		return nullptr;
 	}
 
-	void execute();
+	void execute(float deltaTime);
 
 	int id = 0;
 	LAYER layer = LAYER::LAYER0;
@@ -75,7 +75,7 @@ public:
 	std::string tag = "Default";
 
 private:
-	std::unordered_map<int, std::vector<std::unique_ptr<Component>>> m_components;
+	std::unordered_map<int, std::vector<std::shared_ptr<Component>>> m_components;
 };
 
 class Scheduler {
@@ -91,7 +91,19 @@ public:
 
 	std::vector<GameObject*>* getObjectPerLayer(LAYER layer) { return &m_objectPerLayer[layer]; }
 
-	void execute();
+	template<class T>
+	std::list<T*> getComponentList(LAYER layer) {
+		std::list<T*> componentList;
+		for (auto& ite : m_objectPerLayer[layer]) {
+			T* component = ite->getComponent<T>();
+			if (component)
+				componentList.push_back(component);
+		}
+
+		return componentList;
+	}
+
+	void execute(float deltaTime = 1.0f);
 
 	static Scheduler& instance() {
 		static Scheduler inst;

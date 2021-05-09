@@ -25,7 +25,7 @@ public:
 
 	VertexBuffer* getVertexBuffer() { return &m_vertexBuffer; }
 	IndexBuffer* getIndexBuffer() { return &m_indexBuffer; }
-	StructuredBuffer<glm::vec4>* getUVBuffer() { return &m_uvBuffer; }
+	StructuredBuffer* getUVBuffer() { return &m_uvBuffer; }
 
 	uint32_t getAllIndexCount() { return m_allIndexCount; }
 
@@ -85,7 +85,7 @@ private:
 	VertexBuffer m_vertexBuffer;
 	IndexBuffer m_indexBuffer;
 
-	StructuredBuffer<glm::vec4> m_uvBuffer;
+	StructuredBuffer m_uvBuffer;
 
 	std::string m_filename;
 

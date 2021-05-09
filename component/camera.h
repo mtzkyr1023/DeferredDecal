@@ -10,7 +10,7 @@ public:
 	Camera(float fov, float aspect, float nearPlane, float farPlane, LAYER layer = LAYER::LAYER0);
 	~Camera();
 	
-	void execute();
+	void execute(float deltaTime);
 
 	glm::mat4 viewMatrix;
 	glm::mat4 projMatrix;

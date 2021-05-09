@@ -37,7 +37,7 @@ public:
 	bool obbTest(Collider* collider);
 	bool meshTest(Collider* collider);
 
-	void execute() {}
+	void execute(float deltaTime) {}
 
 	void setRadius(float radius) { m_radius = radius; }
 	void setRadius(Mesh* mesh);

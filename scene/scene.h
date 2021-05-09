@@ -10,7 +10,7 @@ public:
 
 	virtual void init() {}
 
-	virtual void run() {}
+	virtual void run(uint32_t curImageIndex, float deltaTime = 1.0f) {}
 
 	std::vector<GameObject> gameObjects;
 };

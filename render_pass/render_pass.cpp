@@ -42,3 +42,11 @@ bool ResourceManager::createTexture(const char* name, ID3D12Device* device, ID3D
 
 	return true;
 }
+
+bool ResourceManager::createConstantBuffer(const char* name, ID3D12Device* device, UINT size, UINT backBufferCount) {
+	m_resourceArray[name] = std::make_unique<ConstantBuffer>();
+	if (!static_cast<ConstantBuffer*>(m_resourceArray[name].get())->create(device, size, backBufferCount))
+		return false;
+
+	return true;
+}

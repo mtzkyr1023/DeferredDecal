@@ -246,7 +246,7 @@ bool Mesh::calculateUV(ID3D12Device* dev) {
 		tex.push_back(glm::vec4(m_texcoord[i], 0.0f, 0.0f));
 	}
 
-	if (!m_uvBuffer.create(dev, 1, tex.size(), false))
+	if (!m_uvBuffer.create(dev, 1, sizeof(glm::vec4), tex.size(), false))
 		return false;
 
 	return true;

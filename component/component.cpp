@@ -10,10 +10,10 @@ GameObject::~GameObject() {
 
 }
 
-void GameObject::execute() {
+void GameObject::execute(float deltaTime) {
 	for (auto& ite : m_components) {
 		for (auto& itr : ite.second) {
-			if (itr->enabled) itr->execute();
+			if (itr->enabled) itr->execute(deltaTime);
 		}
 	}
 }
@@ -42,8 +42,8 @@ void Scheduler::eraseObject(int id) {
 	m_objectArray.erase(id);
 }
 
-void Scheduler::execute() {
+void Scheduler::execute(float deltaTime) {
 	for (auto& ite : m_objectArray) {
-		ite.second->execute();
+		ite.second->execute(deltaTime);
 	}
 }

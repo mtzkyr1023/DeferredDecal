@@ -7,6 +7,7 @@ bool GeometoryPass::create(ID3D12Device* device, ID3D12CommandQueue* queue, UINT
 	m_height = height;
 
 	m_rootSignature.addDescriptorCount(D3D12_SHADER_VISIBILITY_VERTEX, D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 0, 1);
+	m_rootSignature.addDescriptorCount(D3D12_SHADER_VISIBILITY_VERTEX, D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);
 	m_rootSignature.addDescriptorCount(D3D12_SHADER_VISIBILITY_PIXEL, D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 0, 1);
 	m_rootSignature.addDescriptorCount(D3D12_SHADER_VISIBILITY_PIXEL, D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 0, 1);
 	if (!m_rootSignature.create(device,
@@ -27,8 +28,8 @@ bool GeometoryPass::create(ID3D12Device* device, ID3D12CommandQueue* queue, UINT
 	m_pipeline.addInputLayout("TANGENT", DXGI_FORMAT_R32G32B32_FLOAT, 0);
 	m_pipeline.addInputLayout("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT, 0);
 	m_pipeline.addRenderTargetFormat(DXGI_FORMAT_R8G8B8A8_UNORM);
-//	m_pipeline.addRenderTargetFormat(DXGI_FORMAT_R16G16B16A16_FLOAT);
-//	m_pipeline.addRenderTargetFormat(DXGI_FORMAT_R16G16_FLOAT);
+	m_pipeline.addRenderTargetFormat(DXGI_FORMAT_R16G16B16A16_FLOAT);
+	m_pipeline.addRenderTargetFormat(DXGI_FORMAT_R16G16_FLOAT);
 	m_pipeline.setBlendState(BlendState::eNone);
 	m_pipeline.setDepthState(true, D3D12_COMPARISON_FUNC_LESS_EQUAL);
 	m_pipeline.setDepthStencilFormat(DXGI_FORMAT_D32_FLOAT);
@@ -39,19 +40,13 @@ bool GeometoryPass::create(ID3D12Device* device, ID3D12CommandQueue* queue, UINT
 	if (!m_pipeline.create(device, m_rootSignature.getRootSignature()))
 		return false;
 
-	if (!m_cbvHeap.create(device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, backBufferCount + 1))
-		return false;
-
 	if (!m_samplerHeap.create(device, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, 1))
 		return false;
 
-	if (!m_rtvHeap.create(device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1))
+	if (!m_rtvHeap.create(device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 3))
 		return false;
 
 	if (!m_dsvHeap.create(device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1))
-		return false;
-
-	if (!m_cb0.create(device, backBufferCount))
 		return false;
 
 	if (!m_mesh.createFromGltf(device, queue, 1, "models/cube.gltf"))
@@ -68,6 +63,18 @@ bool GeometoryPass::create(ID3D12Device* device, ID3D12CommandQueue* queue, UINT
 
 		device->CreateRenderTargetView(ResourceManager::Instance().getResource(ALBEDO_BUFFER)->getResource(0), &rtvDesc, rtvHandle);
 
+		rtvDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+
+		rtvHandle = m_rtvHeap.getCpuHandle(1);
+
+		device->CreateRenderTargetView(ResourceManager::Instance().getResource(NORMAL_BUFFER)->getResource(0), &rtvDesc, rtvHandle);
+
+		rtvDesc.Format = DXGI_FORMAT_R16G16_FLOAT;
+
+		rtvHandle = m_rtvHeap.getCpuHandle(2);
+
+		device->CreateRenderTargetView(ResourceManager::Instance().getResource(PBR_BUFFER)->getResource(0), &rtvDesc, rtvHandle);
+
 		D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{};
 		dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
 		dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
@@ -79,13 +86,17 @@ bool GeometoryPass::create(ID3D12Device* device, ID3D12CommandQueue* queue, UINT
 		device->CreateDepthStencilView(ResourceManager::Instance().getResource(DEPTH_BUFFER)->getResource(0), &dsvDesc, dsvHandle);
 	}
 
+	if (!m_cbvHeap.create(device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, backBufferCount * 2 + 1))
+		return false;
+
 	{
 		auto cbvHandle = m_cbvHeap.getCpuHandle(0);
+		ConstantBuffer* cb0 = ResourceManager::Instance().getResourceAsCB(VIEW_PROJ_BUFFER);
 		for (uint32_t i = 0; i < backBufferCount; i++) {
 
 			D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
-			cbvDesc.SizeInBytes = sizeof(CB0);
-			cbvDesc.BufferLocation = m_cb0.getResource(i)->GetGPUVirtualAddress();
+			cbvDesc.SizeInBytes = sizeof(RenderPass::ViewProjBuffer);
+			cbvDesc.BufferLocation = cb0->getResource(i)->GetGPUVirtualAddress();
 
 			device->CreateConstantBufferView(&cbvDesc, cbvHandle);
 			cbvHandle.ptr += device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -115,7 +126,7 @@ void GeometoryPass::render(ID3D12GraphicsCommandList* command, UINT curImageCoun
 	command->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 	command->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
-	command->OMSetRenderTargets(1, &rtvHandle, false, &dsvHandle);
+	command->OMSetRenderTargets(3, &rtvHandle, true, &dsvHandle);
 
 	D3D12_VIEWPORT viewport{};
 	viewport.Width = (float)m_width;
@@ -146,30 +157,99 @@ void GeometoryPass::render(ID3D12GraphicsCommandList* command, UINT curImageCoun
 	command->SetDescriptorHeaps(_countof(descHeaps), descHeaps);
 
 	auto cbvHandle = m_cbvHeap.getGpuHandle(curImageCount);
+	auto srvHandle = m_cbvHeap.getGpuHandle(2 + m_simpleMeshRendererList.size() * 2);
 	auto samplerHandle = m_samplerHeap.getGpuHandle(0);
 
 	command->SetGraphicsRootDescriptorTable(0, cbvHandle);
-	cbvHandle.ptr += m_cbvHeap.getDescriptorSize();
-	command->SetGraphicsRootDescriptorTable(1, cbvHandle);
-	command->SetGraphicsRootDescriptorTable(2, samplerHandle);
-
-	command->IASetVertexBuffers(0, 1, m_mesh.getVertexBuffer()->getVertexBuferView(0));
-	command->IASetIndexBuffer(m_mesh.getIndexBuffer()->getIndexBufferView(0));
+	command->SetGraphicsRootDescriptorTable(2, srvHandle);
+	command->SetGraphicsRootDescriptorTable(3, samplerHandle);
 
 	command->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	UINT vertexOffset = 0;
-	UINT indexOffset = 0;
-	for (UINT i = 0; i < m_mesh.getMaterialCount(); i++) {
-		command->DrawIndexedInstanced(m_mesh.getIndexCount(i), 1, indexOffset, vertexOffset, 0);
+	uint32_t i = 0;
+	for (auto& ite : m_simpleMeshRendererList) {
+		Mesh* mesh = ite->mesh;
+		if (mesh == nullptr)
+			mesh = &m_mesh;
+
+		cbvHandle = m_cbvHeap.getGpuHandle(2 + m_simpleMeshRendererList.size() * 2 + i);
+		command->SetGraphicsRootDescriptorTable(1, cbvHandle);
+
+		command->IASetVertexBuffers(0, 1, mesh->getVertexBuffer()->getVertexBuferView(0));
+		command->IASetIndexBuffer(mesh->getIndexBuffer()->getIndexBufferView(0));
+
+		UINT vertexOffset = 0;
+		UINT indexOffset = 0;
+		for (UINT j = 0; j < mesh->getMaterialCount(); j++) {
+			command->DrawIndexedInstanced(mesh->getIndexCount(j), 1, indexOffset, vertexOffset, 0);
+			vertexOffset += mesh->getVertexCount(j);
+			indexOffset += mesh->getIndexCount(j);
+		}
+
+		i++;
 	}
 }
 
 void GeometoryPass::run(UINT curImageCount) {
-	CB0 cb0;
+	uint32_t i = 0;
+	for (auto& ite : m_simpleMeshRendererList) {
+		GameObject* obj = ite->parent;
+		Transform* trans = obj->getComponent<Transform>();
 
-	cb0.view = glm::transpose(glm::lookAtLH(glm::vec3(0.0f, 0.0f, -10.0f), glm::vec3(0.0f, 0.01f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
-	cb0.proj = glm::transpose(glm::perspectiveLH(glm::half_pi<float>(), 1280.0f / 720.0f, 0.1f, 100.0f));
+		m_cb1Array[i].updateBuffer(curImageCount, sizeof(glm::mat4), &glm::transpose(trans->matrix));
 
-	m_cb0.updateBuffer(curImageCount, sizeof(CB0), &cb0);
+		i++;
+	}
+}
+
+bool GeometoryPass::setDescriptorHeap(ID3D12Device* device, UINT backBufferCount) {
+	m_simpleMeshRendererList = Scheduler::instance().getComponentList<SimpleMeshRenderer>(LAYER::LAYER0);
+
+	m_cb1Array.resize(m_simpleMeshRendererList.size());
+	for (auto& ite : m_cb1Array) {
+		if (!ite.create(device, sizeof(glm::mat4) * 4, backBufferCount))
+			return false;
+	}
+
+	if (!m_cbvHeap.create(device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+		backBufferCount + backBufferCount * m_simpleMeshRendererList.size() + 1))
+		return false;
+
+	{
+		auto cbvHandle = m_cbvHeap.getCpuHandle(0);
+		ConstantBuffer* cb0 = ResourceManager::Instance().getResourceAsCB(VIEW_PROJ_BUFFER);
+		for (uint32_t i = 0; i < backBufferCount; i++) {
+
+			D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
+			cbvDesc.SizeInBytes = sizeof(RenderPass::ViewProjBuffer);
+			cbvDesc.BufferLocation = cb0->getResource(i)->GetGPUVirtualAddress();
+
+			device->CreateConstantBufferView(&cbvDesc, cbvHandle);
+			cbvHandle.ptr += device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		}
+
+		for (uint32_t i = 0; i < backBufferCount; i++) {
+			for (uint32_t j = 0; j < m_simpleMeshRendererList.size(); j++) {
+				D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
+				cbvDesc.SizeInBytes = sizeof(glm::mat4) * 4;
+				cbvDesc.BufferLocation = m_cb1Array[j].getResource(i)->GetGPUVirtualAddress();
+
+				device->CreateConstantBufferView(&cbvDesc, cbvHandle);
+				cbvHandle.ptr += device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+			}
+		}
+
+		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+		srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		srvDesc.Texture2D.MipLevels = 1;
+		srvDesc.Texture2D.MostDetailedMip = 0;
+		srvDesc.Texture2D.PlaneSlice = 0;
+		srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+
+		device->CreateShaderResourceView(ResourceManager::Instance().getResource(SAMPLE_TEXTURE)->getResource(0), &srvDesc, cbvHandle);
+	}
+
+	return true;
 }

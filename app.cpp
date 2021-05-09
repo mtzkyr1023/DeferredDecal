@@ -53,10 +53,19 @@ bool App::initialize(HWND hwnd) {
 	if (!ResourceManager::Instance().createRenderTarget2D(ALBEDO_BUFFER, m_device.getDevice(), 1, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, DXGI_FORMAT_R8G8B8A8_UNORM, width, height))
 		return false;
 
+	if (!ResourceManager::Instance().createRenderTarget2D(NORMAL_BUFFER, m_device.getDevice(), 1, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, DXGI_FORMAT_R16G16B16A16_FLOAT, width, height))
+		return false;
+
+	if (!ResourceManager::Instance().createRenderTarget2D(PBR_BUFFER, m_device.getDevice(), 1, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, DXGI_FORMAT_R16G16_FLOAT, width, height))
+		return false;
+
 	if (!ResourceManager::Instance().createDepthStencilBuffer(DEPTH_BUFFER, m_device.getDevice(), 1, m_width, m_height, false))
 		return false;
 
 	if (!ResourceManager::Instance().createTexture(SAMPLE_TEXTURE, m_device.getDevice(), m_queue.getQueue(), 1, DXGI_FORMAT_R8G8B8A8_UNORM, "textures/default_color.bmp", false))
+		return false;
+
+	if (!ResourceManager::Instance().createConstantBuffer(VIEW_PROJ_BUFFER, m_device.getDevice(), sizeof(RenderPass::ViewProjBuffer), backBufferCount))
 		return false;
 
 
@@ -71,6 +80,12 @@ bool App::initialize(HWND hwnd) {
 
 	if (!m_fence.create(m_device.getDevice()))
 		return false;
+
+	m_scene.init();
+
+	if (!m_geoPass.setDescriptorHeap(m_device.getDevice(), backBufferCount))
+		return false;
+
 
 	return true;
 }
@@ -90,14 +105,20 @@ void App::render() {
 
 	{
 		Texture* albedoBuffer = static_cast<Texture*>(ResourceManager::Instance().getResource(ALBEDO_BUFFER));
+		Texture* normalBuffer = static_cast<Texture*>(ResourceManager::Instance().getResource(NORMAL_BUFFER));
+		Texture* pbrBuffer = static_cast<Texture*>(ResourceManager::Instance().getResource(PBR_BUFFER));
 		Texture* depthBuffer = static_cast<Texture*>(ResourceManager::Instance().getResource(DEPTH_BUFFER));
 
 		albedoBuffer->transitionResource(command, 0, D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		normalBuffer->transitionResource(command, 0, D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		pbrBuffer->transitionResource(command, 0, D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 		depthBuffer->transitionResource(command, 0, D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
 		m_geoPass.render(command, curImageCount);
 
 		albedoBuffer->transitionResource(command, 0, D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		normalBuffer->transitionResource(command, 0, D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		pbrBuffer->transitionResource(command, 0, D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 		depthBuffer->transitionResource(command, 0, D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	}
 
@@ -134,11 +155,15 @@ void App::run(UINT curImageCount) {
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 
-	ImGui::Begin("Portal");
+	ImGui::Begin("");
 
 	ImGui::End();
 	
 	ImGui::Render();
+
+	m_scene.run(curImageCount, 1.0f);
+
+	Scheduler::instance().execute(1.0f);
 
 	m_geoPass.run(curImageCount);
 	m_lastPass.run(curImageCount);
