@@ -11,6 +11,7 @@ public:
 	~DescriptorHeap() = default;
 
 	bool create(ID3D12Device* device, D3D12_DESCRIPTOR_HEAP_TYPE heapType, D3D12_DESCRIPTOR_HEAP_FLAGS heapFlags, UINT descNum);
+	void destroy();
 
 	ID3D12DescriptorHeap* getDescriptorHeap() { return m_descHeap.Get(); }
 	D3D12_CPU_DESCRIPTOR_HANDLE getCpuHandle(UINT num);

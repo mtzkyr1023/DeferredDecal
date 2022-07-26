@@ -31,12 +31,6 @@
     <Filter Include="リソース ファイル\imgui">
       <UniqueIdentifier>{89e63583-b249-4e89-81a0-e07196eeb8dc}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ヘッダー ファイル\component">
-      <UniqueIdentifier>{d4dbd423-68dc-4d2d-b475-2d15f4769bb6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\component">
-      <UniqueIdentifier>{7f1f2709-1294-42b5-9d42-3752d69acee8}</UniqueIdentifier>
-    </Filter>
     <Filter Include="ヘッダー ファイル\system">
       <UniqueIdentifier>{3e007ed1-a068-4b2f-89aa-389ce1d23e27}</UniqueIdentifier>
     </Filter>
@@ -48,6 +42,12 @@
     </Filter>
     <Filter Include="ソース ファイル\scene">
       <UniqueIdentifier>{7f86dcdc-a5dd-4b4a-98ea-638f496a474d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\object">
+      <UniqueIdentifier>{1ab24e75-8d6e-47f3-8cd0-bb4286227a46}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\object">
+      <UniqueIdentifier>{1fb6b4ff-12e6-436c-84dd-22983ce343a6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -96,12 +96,6 @@
     <ClInclude Include="framework\fence.h">
       <Filter>ヘッダー ファイル\framework</Filter>
     </ClInclude>
-    <ClInclude Include="tools\model.h">
-      <Filter>リソース ファイル\tools</Filter>
-    </ClInclude>
-    <ClInclude Include="render_pass\geometory_pass.h">
-      <Filter>ヘッダー ファイル\render_pass</Filter>
-    </ClInclude>
     <ClInclude Include="render_pass\render_pass.h">
       <Filter>ヘッダー ファイル\render_pass</Filter>
     </ClInclude>
@@ -132,35 +126,32 @@
     <ClInclude Include="tools\my_gui.h">
       <Filter>リソース ファイル\tools</Filter>
     </ClInclude>
-    <ClInclude Include="component\component.h">
-      <Filter>ヘッダー ファイル\component</Filter>
-    </ClInclude>
-    <ClInclude Include="component\transform.h">
-      <Filter>ヘッダー ファイル\component</Filter>
-    </ClInclude>
-    <ClInclude Include="component\camera.h">
-      <Filter>ヘッダー ファイル\component</Filter>
-    </ClInclude>
-    <ClInclude Include="component\renderer.h">
-      <Filter>ヘッダー ファイル\component</Filter>
-    </ClInclude>
-    <ClInclude Include="component\collider.h">
-      <Filter>ヘッダー ファイル\component</Filter>
-    </ClInclude>
     <ClInclude Include="system\oct_tree.h">
       <Filter>ヘッダー ファイル\system</Filter>
     </ClInclude>
     <ClInclude Include="tools\xatlas.h">
       <Filter>リソース ファイル\tools</Filter>
     </ClInclude>
-    <ClInclude Include="render_pass\last_pass.h">
+    <ClInclude Include="framework\render_pipeline.h">
       <Filter>ヘッダー ファイル\render_pass</Filter>
     </ClInclude>
-    <ClInclude Include="scene\scene.h">
-      <Filter>ヘッダー ファイル\scene</Filter>
+    <ClInclude Include="framework\sampler.h">
+      <Filter>ヘッダー ファイル\framework</Filter>
     </ClInclude>
-    <ClInclude Include="scene\sample_scene.h">
-      <Filter>ヘッダー ファイル\scene</Filter>
+    <ClInclude Include="defines.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="tools\model.h">
+      <Filter>リソース ファイル\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="object\transform.h">
+      <Filter>ヘッダー ファイル\object</Filter>
+    </ClInclude>
+    <ClInclude Include="object\camera.h">
+      <Filter>ヘッダー ファイル\object</Filter>
+    </ClInclude>
+    <ClInclude Include="framework\command_signature.h">
+      <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -209,9 +200,6 @@
     <ClCompile Include="framework\fence.cpp">
       <Filter>ソース ファイル\framework</Filter>
     </ClCompile>
-    <ClCompile Include="tools\model.cpp">
-      <Filter>リソース ファイル\tools</Filter>
-    </ClCompile>
     <ClCompile Include="imgui_dx12\imgui.cpp">
       <Filter>リソース ファイル\imgui</Filter>
     </ClCompile>
@@ -236,35 +224,23 @@
     <ClCompile Include="render_pass\render_pass.cpp">
       <Filter>ソース ファイル\render_pass</Filter>
     </ClCompile>
-    <ClCompile Include="component\component.cpp">
-      <Filter>ソース ファイル\component</Filter>
-    </ClCompile>
-    <ClCompile Include="component\transform.cpp">
-      <Filter>ソース ファイル\component</Filter>
-    </ClCompile>
-    <ClCompile Include="component\camera.cpp">
-      <Filter>ソース ファイル\component</Filter>
-    </ClCompile>
-    <ClCompile Include="component\renderer.cpp">
-      <Filter>ソース ファイル\component</Filter>
-    </ClCompile>
-    <ClCompile Include="component\collider.cpp">
-      <Filter>ソース ファイル\component</Filter>
-    </ClCompile>
     <ClCompile Include="tools\xatlas.cpp">
       <Filter>リソース ファイル\tools</Filter>
     </ClCompile>
-    <ClCompile Include="render_pass\last_pass.cpp">
+    <ClCompile Include="framework\render_pipeline.cpp">
       <Filter>ソース ファイル\render_pass</Filter>
     </ClCompile>
-    <ClCompile Include="render_pass\geometory_pass.cpp">
-      <Filter>ソース ファイル\render_pass</Filter>
+    <ClCompile Include="tools\model.cpp">
+      <Filter>リソース ファイル\tools</Filter>
     </ClCompile>
-    <ClCompile Include="scene\scene.cpp">
-      <Filter>ソース ファイル\scene</Filter>
+    <ClCompile Include="object\transform.cpp">
+      <Filter>ソース ファイル\object</Filter>
     </ClCompile>
-    <ClCompile Include="scene\sample_scene.cpp">
-      <Filter>ソース ファイル\scene</Filter>
+    <ClCompile Include="object\camera.cpp">
+      <Filter>ソース ファイル\object</Filter>
+    </ClCompile>
+    <ClCompile Include="framework\command_signature.cpp">
+      <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -15,10 +15,9 @@
 #include "tools/model.h"
 #include "tools/my_gui.h"
 
-#include "render_pass/geometory_pass.h"
-#include "render_pass/last_pass.h"
 
-#include "scene/sample_scene.h"
+#include "framework/render_pipeline.h"
+
 
 #include "glm-master/glm/glm.hpp"
 #include "glm-master/glm/gtc/matrix_transform.hpp"
@@ -40,21 +39,8 @@ public:
 private:
 
 private:
-	Device m_device;
-	Queue m_queue;
-	Swapchain m_swapchain;
-	std::vector<CommandAllocator> m_commandAllocator;
-	std::vector<CommandList> m_commandList;
-	GeometoryPass m_geoPass;
-	LastPass m_lastPass;
-	Fence m_fence;
 
 	MyGui m_gui;
 
-	SampleScene m_scene;
-
-	static const UINT m_width = 1280;
-	static const UINT m_height = 720;
-	static const UINT backBufferCount = 2;
-	static const UINT portalCount = 2;
+	RenderPipeline m_renderPipeline;
 };

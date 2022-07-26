@@ -4,7 +4,6 @@
 #include "../glm-master/glm/glm.hpp"
 #include "../glm-master/glm/gtc/matrix_transform.hpp"
 #include "../glm-master/glm/gtc/quaternion.hpp"
-#include "../glm-master/glm/gtx/quaternion.hpp"
 
 #include "component.h"
 

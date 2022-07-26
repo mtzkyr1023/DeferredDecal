@@ -32,6 +32,7 @@ public:
 	void setStencilMask(UINT8 readMask, UINT8 writeMask);
 	void setBlendState(BlendState blendState);
 	void setVertexShader(IDxcBlob* blob);
+	void setGeometoryShader(IDxcBlob* blob);
 	void setPixelShader(IDxcBlob* blob);
 
 	ID3D12PipelineState* getPipelineState() { return m_pipelineState.Get(); }
@@ -48,8 +49,9 @@ private:
 	std::vector<DXGI_FORMAT> m_rtvFormat;
 	DXGI_FORMAT m_depthStencilFormat;
 	BlendState m_blendState = BlendState::eNone;
-	IDxcBlob* m_vertexShader;
-	IDxcBlob* m_pixelShader;
+	IDxcBlob* m_vertexShader = nullptr;
+	IDxcBlob* m_geometoryShader = nullptr;
+	IDxcBlob* m_pixelShader = nullptr;
 	UINT8 m_readMask;
 	UINT8 m_writeMask;
 };

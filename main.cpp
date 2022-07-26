@@ -59,17 +59,9 @@ int  WINAPI  WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	MSG         msg;
 
 	// Set up and register window class
-	WNDCLASS wc = { CS_HREDRAW | CS_VREDRAW | CS_OWNDC,
-		WndProc,                                //イベントcallback関数
-		0,
-		0,
-		hInstance,
-		NULL,                                   //アイコン
-		LoadCursor(NULL, IDC_ARROW),          //マウスカーソル
-		(HBRUSH)GetStockObject(WHITE_BRUSH), //背景色
-		NULL,                                   //メニュー
-		NAME };                                 //クラス名
-	if (RegisterClass(&wc) == 0) return FALSE;
+
+	WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, NAME, NULL };
+	if (RegisterClassEx(&wc) == 0) return FALSE;
 
 	//ウインドウ生成
 	hWnd = CreateWindow(NAME,                  //タイトルバーテキスト

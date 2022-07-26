@@ -10,7 +10,10 @@
 
 class RootSignature {
 public:
-	RootSignature() = default;
+	RootSignature() :
+		m_descriptorTableId(0)
+	{}
+
 	~RootSignature() = default;
 
 	bool create(ID3D12Device* device, D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlag);
@@ -24,6 +27,8 @@ private:
 
 	std::vector<D3D12_DESCRIPTOR_RANGE> m_range;
 	std::vector<D3D12_SHADER_VISIBILITY> m_shaderVisiblity;
+
+	UINT m_descriptorTableId;
 };
 
 

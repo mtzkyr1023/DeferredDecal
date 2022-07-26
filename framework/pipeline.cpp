@@ -43,7 +43,7 @@ bool Pipeline::create(ID3D12Device* device, ID3D12RootSignature* rootSignature) 
 	}
 
 	D3D12_BLEND_DESC blendDesc{};
-	blendDesc.AlphaToCoverageEnable = m_blendState != BlendState::eNone ? false : false;
+	blendDesc.AlphaToCoverageEnable = m_blendState == BlendState::eNone ? false : false;
 	blendDesc.IndependentBlendEnable = false;
 	for (UINT i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; i++) {
 		blendDesc.RenderTarget[i] = rtblendDesc;
@@ -53,6 +53,7 @@ bool Pipeline::create(ID3D12Device* device, ID3D12RootSignature* rootSignature) 
 	gpsDesc.InputLayout = { m_layout.data(), (UINT)m_layout.size() };
 	gpsDesc.pRootSignature = rootSignature;
 	gpsDesc.VS = { m_vertexShader->GetBufferPointer(), m_vertexShader->GetBufferSize() };
+	if(m_geometoryShader) gpsDesc.GS = { m_geometoryShader->GetBufferPointer(), m_geometoryShader->GetBufferSize() };
 	gpsDesc.PS = { m_pixelShader->GetBufferPointer(), m_pixelShader->GetBufferSize() };
 	gpsDesc.RasterizerState = m_rasterDesc;
 	gpsDesc.BlendState = blendDesc;
@@ -150,6 +151,10 @@ void Pipeline::setBlendState(BlendState blendState) {
 
 void Pipeline::setVertexShader(IDxcBlob* shader) {
 	m_vertexShader = shader;
+}
+
+void Pipeline::setGeometoryShader(IDxcBlob* shader) {
+	m_geometoryShader = shader;
 }
 
 void Pipeline::setPixelShader(IDxcBlob* shader) {

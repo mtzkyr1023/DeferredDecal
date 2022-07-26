@@ -8,7 +8,7 @@
 
 class VertexBuffer : public Resource {
 public:
-	VertexBuffer() = default;
+	VertexBuffer(const char* name) : Resource(name) {}
 	~VertexBuffer() = default;
 
 	bool create(ID3D12Device* device, ID3D12CommandQueue* queue, UINT bufferCount, UINT stride, UINT size, void* data);
@@ -22,7 +22,7 @@ private:
 
 class IndexBuffer : public Resource {
 public:
-	IndexBuffer() = default;
+	IndexBuffer(const char* name) :Resource(name) {}
 	~IndexBuffer() = default;
 
 	bool create(ID3D12Device* device, ID3D12CommandQueue* queue, UINT bufferCount, UINT size, void* data);
@@ -36,7 +36,8 @@ private:
 
 class ConstantBuffer : public Resource {
 public:
-	ConstantBuffer() = default;
+	ConstantBuffer() {}
+	ConstantBuffer(const char* name) : Resource(name) {}
 	~ConstantBuffer() {
 		for (auto& ite : m_resource)
 			ite->Unmap(0, nullptr);
@@ -45,8 +46,12 @@ public:
 	bool create(ID3D12Device* device, UINT size, UINT bufferCount) {
 		HRESULT res;
 
+		m_resourceType = ResourceType::kConstanceBuffer;
+
 		m_resource.resize(bufferCount);
 		m_constantBufferPtr.resize(bufferCount);
+
+		m_size = size;
 
 		for (UINT i = 0; i < bufferCount; i++) {
 			D3D12_HEAP_PROPERTIES heapProp{};
@@ -87,14 +92,22 @@ public:
 
 	BYTE* getBuffer(UINT num) { return m_constantBufferPtr[num]; }
 
+	size_t getSize() { return m_size; }
+
 private:
 	std::vector<BYTE*> m_constantBufferPtr;
+	size_t m_size;
 };
 
 
 class StructuredBuffer : public Resource {
 public:
-	StructuredBuffer() = default;
+	StructuredBuffer() : Resource("StructuredBuffer") {
+		m_resourceType = ResourceType::kStrucuredBuffer;
+	}
+	StructuredBuffer(const char* name) : Resource(name) {
+		m_resourceType = ResourceType::kStrucuredBuffer;
+	}
 	~StructuredBuffer() {
 		if (m_isCpuAccess) {
 			for (auto& ite : m_resource)
@@ -102,58 +115,70 @@ public:
 		}
 	}
 
-	bool create(ID3D12Device* device, UINT stride, UINT bufferCount, UINT elementCount, bool isCpuAccess) {
-		HRESULT res;
+	bool create(ID3D12Device* device, UINT stride, UINT bufferCount, UINT elementCount, bool isCpuAccess, bool isUnorderedAccess, bool isAppend = false, bool isConsume = false);
 
-		m_resource.resize(bufferCount);
-		m_bufferPtr.resize(bufferCount);
-
-		m_isCpuAccess = isCpuAccess;
-
-		if (isCpuAccess) {
-			for (UINT i = 0; i < bufferCount; i++) {
-				D3D12_HEAP_PROPERTIES heapProp{};
-				heapProp.Type = D3D12_HEAP_TYPE_UPLOAD;
-				heapProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-				heapProp.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-				heapProp.CreationNodeMask = 1;
-				heapProp.VisibleNodeMask = 1;
-
-				D3D12_RESOURCE_DESC resDesc{};
-				resDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-				resDesc.Alignment = 0;
-				resDesc.Width = stride * elementCount;
-				resDesc.Height = 1;
-				resDesc.DepthOrArraySize = 1;
-				resDesc.MipLevels = 1;
-				resDesc.Format = DXGI_FORMAT_UNKNOWN;
-				resDesc.SampleDesc.Count = 1;
-				resDesc.SampleDesc.Quality = 0;
-				resDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-				resDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-
-				res = device->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_GENERIC_READ,
-					nullptr, IID_PPV_ARGS(m_resource[i].ReleaseAndGetAddressOf()));
-				res = device->GetDeviceRemovedReason();
-				if (FAILED(res))
-					return false;
-
-				m_resource[i]->Map(0, nullptr, reinterpret_cast<void**>(&m_bufferPtr[i]));
-			}
-		}
-
-		return true;
-	}
+	bool create(ID3D12Device* dev, ID3D12CommandQueue* queue, UINT stride, UINT bufferCount, UINT elementCount, void* data);
 
 	void updateBuffer(UINT bufferNum, UINT size, void* data) {
 		memcpy_s(m_bufferPtr[bufferNum], size, data, size);
 	}
 
+
+	void transitionResource(ID3D12GraphicsCommandList* command, UINT textureNum, D3D12_RESOURCE_BARRIER_FLAGS flag,
+		D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after);
+
 	BYTE* getBuffer(UINT num) { return m_bufferPtr[num]; }
+
+	bool getIsUnorderedAccess() { return m_isUnorderedAccess; }
+
+	int getElementCount() { return m_elementCount; }
+	int getStride() { return m_stride; }
+
+	bool IsAppendBuffer() { return m_isAppendBuffer; }
+	bool IsConsumeBuffer() { return m_isConsumeBuffer; }
 
 private:
 	std::vector<BYTE*> m_bufferPtr;
 	bool m_isCpuAccess = false;
+	bool m_isUnorderedAccess = false;
+
+	bool m_isAppendBuffer = false;
+	bool m_isConsumeBuffer = false;
+
+	int m_elementCount;
+	int m_stride;
+};
+
+
+class ByteAddressBuffer : public Resource {
+public:
+	ByteAddressBuffer() : Resource("ByteAddressBuffer") {
+		m_resourceType = ResourceType::kByteAddressBuffer;
+	}
+	ByteAddressBuffer(const char* name) : Resource(name) {
+		m_resourceType = ResourceType::kByteAddressBuffer;
+	}
+	~ByteAddressBuffer() {
+
+	}
+
+	bool create(ID3D12Device* device, DXGI_FORMAT format, UINT resourceCount, UINT size, bool isUnorderedAccess);
+
+	void transitionResource(ID3D12GraphicsCommandList* command, UINT resourceCount, D3D12_RESOURCE_BARRIER_FLAGS flags,
+		D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after);
+
+	bool getIsUnorderedAccess() { return m_isUnorderedAccess; }
+
+	UINT getSize() { return m_size; }
+
+	DXGI_FORMAT getFormat() { return m_format; }
+
+private:
+	bool m_isUnorderedAccess = false;
+
+	DXGI_FORMAT m_format;
+
+	size_t m_size;
 };
 
 #endif

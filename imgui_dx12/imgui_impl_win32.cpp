@@ -127,12 +127,25 @@ static void ImGui_ImplWin32_UpdateMousePos()
         ::SetCursorPos(pos.x, pos.y);
     }
 
+	RECT wRect;
+	RECT sRect;
+	GetWindowRect(g_hWnd, &wRect);
+	GetClientRect(g_hWnd, &sRect);
+
     // Set mouse position
     io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
     POINT pos;
-    if (::GetActiveWindow() == g_hWnd && ::GetCursorPos(&pos))
-        if (::ScreenToClient(g_hWnd, &pos))
-            io.MousePos = ImVec2((float)pos.x, (float)pos.y);
+	if (::GetActiveWindow() == g_hWnd && ::GetCursorPos(&pos)) {
+		if (::ScreenToClient(g_hWnd, &pos)) {
+			LONG defX = ((wRect.right - wRect.left) - (sRect.right - sRect.left));
+			LONG defY = ((wRect.bottom - wRect.top) - (sRect.bottom - sRect.top));
+
+			float ratioX = (float)pos.x / (float)(sRect.right - sRect.left);
+			float ratioY = (float)pos.y / (float)(sRect.bottom - sRect.top);
+
+			io.MousePos = ImVec2((float)pos.x + (float)defX * ratioX, (float)pos.y + (float)defY * ratioY);
+		}
+	}
 }
 
 void    ImGui_ImplWin32_NewFrame()
@@ -141,7 +154,7 @@ void    ImGui_ImplWin32_NewFrame()
 
     // Setup display size (every frame to accommodate for window resizing)
     RECT rect;
-    ::GetClientRect(g_hWnd, &rect);
+    ::GetWindowRect(g_hWnd, &rect);
     io.DisplaySize = ImVec2((float)(rect.right - rect.left), (float)(rect.bottom - rect.top));
 
     // Setup time step

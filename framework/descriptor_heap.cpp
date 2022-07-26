@@ -19,6 +19,10 @@ bool DescriptorHeap::create(ID3D12Device* device, D3D12_DESCRIPTOR_HEAP_TYPE hea
 	return true;
 }
 
+void DescriptorHeap::destroy() {
+	m_descHeap.Reset();
+}
+
 
 D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeap::getCpuHandle(UINT num) {
 	auto handle = m_descHeap->GetCPUDescriptorHandleForHeapStart();

@@ -8,6 +8,7 @@
 
 #include <wrl/client.h>
 
+#include <memory>
 
 class Shader {
 public:
@@ -16,6 +17,7 @@ public:
 
 	bool createVertexShader(const wchar_t* filename);
 	bool createPixelShader(const wchar_t* filename);
+	bool createGeometoryShader(const wchar_t* filename);
 	bool createComputeShader(const wchar_t* filename);
 
 	IDxcBlob* getByteCode() { return m_bytecode.Get(); }
@@ -24,5 +26,7 @@ private:
 	Microsoft::WRL::ComPtr<IDxcBlob> m_bytecode;
 };
 
+
+using ShaderSp = std::shared_ptr<Shader>;
 
 #endif

@@ -1,5 +1,4 @@
 #include "camera.h"
-#include "renderer.h"
 #include "../tools/model.h"
 
 Camera::Camera() {
@@ -160,9 +159,6 @@ void Camera::frustumTest() {
 	std::vector<GameObject*>* objectArray = Scheduler::instance().getObjectPerLayer(m_layer);
 	for (auto& ite : (*objectArray)) {
 		Transform* trans = ite->getComponent<Transform>();
-		SimpleMeshRenderer* renderer = ite->getComponent<SimpleMeshRenderer>();
-		Mesh* mesh = renderer->mesh;
-		glm::vec3 size = (mesh->getMax() - mesh->getMin()) * trans->scale;
 
 	}
 }

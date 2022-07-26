@@ -1,20 +1,21 @@
 #include "model.h"
 #include "mesh_loader.h"
 #include "xatlas.h"
+#include "../render_pass/render_pass.h"
 
 #include <fstream>
 
 using namespace std;
 
-Mesh::Mesh() {
+Model::Model() {
 
 }
 
-Mesh::~Mesh() {
+Model::~Model() {
 
 }
 
-bool Mesh::createFromGltf(ID3D12Device* dev, ID3D12CommandQueue* queue, uint32_t bufferCount,
+bool Model::createFromGltf(ID3D12Device* dev, ID3D12CommandQueue* queue, uint32_t bufferCount,
 	const char* filename, bool binary) {
 	MeshLoader loader;
 
@@ -32,8 +33,12 @@ bool Mesh::createFromGltf(ID3D12Device* dev, ID3D12CommandQueue* queue, uint32_t
 	m_max = glm::vec3(-FLT_MAX);
 
 	vector<uint32_t> index;
+	vector<glm::vec3> posArray;
 
-	m_vertexArray.reserve((loader.getAllVertexCount()));
+	m_positionArray.reserve((loader.getAllVertexCount()));
+	m_normalArray.reserve((loader.getAllVertexCount()));
+	m_tangentArray.reserve(loader.getAllVertexCount());
+	m_uvArray.reserve(loader.getAllVertexCount());
 
 	m_materialCount = loader.getMaterialCount();
 
@@ -42,19 +47,28 @@ bool Mesh::createFromGltf(ID3D12Device* dev, ID3D12CommandQueue* queue, uint32_t
 	m_normalImageIndex.resize(m_materialCount);
 	m_roughMetalImageIndex.resize(m_materialCount);
 
+	m_indexArray.reserve(loader.getAllIndexCount());
+
+	int indexBufferOffset = 0;
 	for (uint32_t i = 0; i < loader.getMaterialCount(); i++) {
 		for (uint32_t j = 0; j < loader.getVertexCount()[i]; j++) {
-			Vertex tmp;
-			tmp.pos = loader.getPos(i)[j];
-			tmp.nor = loader.getNor(i)[j];
-			tmp.tex = loader.getTex1(i)[j];
-			tmp.tan = loader.getTan(i)[j];
-			m_vertexArray.push_back(tmp);
+			glm::vec4 pos = glm::vec4(loader.getPos(i)[j], 1.0f);
+			glm::vec4 nor = glm::vec4(loader.getNor(i)[j], 0.0f);
+			glm::vec4 tan = glm::vec4(loader.getTan(i)[j], 0.0f);
+			glm::vec4 tex = glm::vec4(loader.getTex1(i)[j], 0.0f, 0.0f);
+			m_positionArray.push_back(pos);
+			m_normalArray.push_back(nor);
+			m_tangentArray.push_back(tan);
+			m_uvArray.push_back(tex);
 			
-			m_min = glm::min(m_min, tmp.pos);
-			m_max = glm::max(m_max, tmp.pos);
+			m_min = glm::min(m_min, glm::vec3(pos.x, pos.y, pos.z));
+			m_max = glm::max(m_max, glm::vec3(pos.x, pos.y, pos.z));
 		}
-		index.insert(index.end(), loader.getIndexArray(i).begin(), loader.getIndexArray(i).end());
+
+		indexBufferOffset += i != 0 ? m_vertexCount[i - 1] : 0;
+		for (uint32_t j = 0; j < loader.getIndexCount()[i]; j++) {
+			m_indexArray.push_back(loader.getIndexArray(i)[j] + indexBufferOffset);
+		}
 
 		m_indexCount.push_back(loader.getIndexCount()[i]);
 		m_vertexCount.push_back(loader.getVertexCount()[i]);
@@ -64,17 +78,43 @@ bool Mesh::createFromGltf(ID3D12Device* dev, ID3D12CommandQueue* queue, uint32_t
 		m_roughMetalImageIndex[i] = loader.getPbrImageIndex(i);
 	}
 
-	for (uint32_t i = 0; i < m_vertexArray.size(); i++) {
-		m_posArray.push_back(m_vertexArray[i].pos);
-		m_norArray.push_back(m_vertexArray[i].nor);
-		m_texcoord.push_back(m_vertexArray[i].tex);
-	}
-	for (uint32_t i = 0; i < index.size(); i++) {
-		m_indexArray.push_back(index[i]);
+	m_positionBuffer = ResourceManager::Instance().createStructuredBuffer(dev, queue, 1, (UINT)sizeof(glm::vec4), (UINT)m_positionArray.size(), m_positionArray.data());
+	m_normalBuffer = ResourceManager::Instance().createStructuredBuffer(dev, queue, 1, (UINT)sizeof(glm::vec4), (UINT)m_normalArray.size(), m_normalArray.data());
+	m_tangentBuffer = ResourceManager::Instance().createStructuredBuffer(dev, queue, 1, (UINT)sizeof(glm::vec4), (UINT)m_tangentArray.size(), m_tangentArray.data());
+	m_uvBuffer = ResourceManager::Instance().createStructuredBuffer(dev, queue, 1, (UINT)sizeof(glm::vec4), (UINT)m_uvArray.size(), m_uvArray.data());
+	m_indexBuffer = ResourceManager::Instance().createStructuredBuffer(dev, queue, 1, (UINT)sizeof(uint32_t), (UINT)m_indexArray.size(), m_indexArray.data());
+
+	int vertexOffset = 0;
+	int indexOffset = 0;
+
+	uint32_t instanceIndexOffset = 0;
+	uint32_t currentIndexCount = 0;
+
+	for (int i = 0; i < m_materialCount; i++) {
+		//glm::vec3 aabbmin(FLT_MAX, FLT_MAX, FLT_MAX);
+		//glm::vec3 aabbmax(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+		//instanceIndexOffset++;
+		//for (int j = 0; j < m_indexCount[i]; j++,currentIndexCount++) {
+		//	aabbmin = glm::min(aabbmin, glm::vec3(m_positionArray[m_indexArray[currentIndexCount]]));
+		//	aabbmax = glm::max(aabbmax, glm::vec3(m_positionArray[m_indexArray[currentIndexCount]]));
+		//	if (j != 0 && ((j / 3) % 256 == 0 || j == m_indexCount[i] - 1)) {
+
+
+		//		m_instanceArray.emplace_back(aabbmin, aabbmax, instanceIndexOffset, j % 256, i);
+
+
+		//		aabbmin = glm::vec3(FLT_MAX, FLT_MAX, FLT_MAX);
+		//		aabbmax = glm::vec3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+
+		//		instanceIndexOffset = j;
+		//	}
+		//}
+
+		vertexOffset += m_vertexCount[i];
+		indexOffset += m_indexCount[i];
 	}
 
-	m_vertexBuffer.create(dev, queue, bufferCount, (UINT)sizeof(Vertex), (UINT)(sizeof(Vertex) * (UINT)m_vertexArray.size()), m_vertexArray.data());
-	m_indexBuffer.create(dev, queue, bufferCount, (UINT)(sizeof(uint32_t) * index.size()), index.data());
+	m_instanceBuffer = ResourceManager::Instance().createStructuredBuffer(dev, queue, 1, sizeof(Instance), m_instanceArray.size(), m_instanceArray.data());
 
 	m_images.resize(loader.getImageCount());
 
@@ -84,26 +124,24 @@ bool Mesh::createFromGltf(ID3D12Device* dev, ID3D12CommandQueue* queue, uint32_t
 	m_imageWidths.resize(loader.getImageCount());
 	m_imageHeights.resize(loader.getImageCount());
 	for (uint32_t i = 0; i < loader.getImageCount(); i++) {
-		if (!m_images[i].createResource(dev, queue, bufferCount,
-			loader.getImageWidth(i), loader.getImageHeight(i), 4, loader.getImageData(i).data(), true))
-			return false;
+		m_images[i] = ResourceManager::Instance().createTexture(dev, queue, 1, loader.getImageWidth(i), loader.getImageHeight(i), 4, loader.getImageData(i).data(), false);
 		m_imageWidths[i] = loader.getImageWidth(i);
 		m_imageHeights[i] = loader.getImageHeight(i);
 		m_imageDatas[i] = loader.getImageData(i);
 	}
 
-	m_allIndexCount = (UINT)index.size();
-	m_allVertexCount = (UINT)m_vertexArray.size();
+	m_allIndexCount = (UINT)m_indexArray.size();
+	m_allVertexCount = (UINT)m_positionArray.size();
 
-	if (!calculateUV(dev))
-		return false;
+	//if (!calculateUV(dev, queue))
+	//	return false;
 
 	saveModelCache();
 
 	return true;
 }
 
-bool Mesh::loadModelCache(ID3D12Device* device, ID3D12CommandQueue* queue, uint32_t bufferCount) {
+bool Model::loadModelCache(ID3D12Device* device, ID3D12CommandQueue* queue, uint32_t bufferCount) {
 	ifstream ifs;
 
 	ifs.open(m_filename.c_str(), ios_base::binary);
@@ -113,20 +151,23 @@ bool Mesh::loadModelCache(ID3D12Device* device, ID3D12CommandQueue* queue, uint3
 	ifs.read((char*)&m_materialCount, sizeof(uint32_t));
 	ifs.read((char*)&m_allVertexCount, sizeof(uint32_t));
 	ifs.read((char*)&m_allIndexCount, sizeof(uint32_t));
-	m_vertexArray.resize(m_allVertexCount);
+	m_positionArray.resize(m_allVertexCount);
+	m_normalArray.resize(m_allVertexCount);
+	m_tangentArray.resize(m_allVertexCount);
+	m_uvArray.resize(m_allVertexCount);
 	m_indexArray.resize(m_allIndexCount);
-	ifs.read((char*)m_vertexArray.data(), sizeof(Vertex) * m_allVertexCount);
+	ifs.read((char*)m_positionArray.data(), sizeof(glm::vec4) * m_allVertexCount);
+	ifs.read((char*)m_normalArray.data(), sizeof(glm::vec4) * m_allVertexCount);
+	ifs.read((char*)m_tangentArray.data(), sizeof(glm::vec4) * m_allVertexCount);
+	ifs.read((char*)m_uvArray.data(), sizeof(glm::vec4) * m_allVertexCount);
 	ifs.read((char*)m_indexArray.data(), sizeof(uint32_t) * m_allIndexCount);
-
-
-	m_vertexBuffer.create(device, queue, bufferCount, (UINT)sizeof(Vertex), (UINT)(sizeof(Vertex) * m_vertexArray.size()), m_vertexArray.data());
-	m_indexBuffer.create(device, queue, bufferCount, (UINT)(sizeof(uint32_t) * m_indexArray.size()), m_indexArray.data());
 
 	m_vertexCount.resize(m_materialCount);
 	m_indexCount.resize(m_materialCount);
 	m_albedoImageIndex.resize(m_materialCount);
 	m_normalImageIndex.resize(m_materialCount);
 	m_roughMetalImageIndex.resize(m_materialCount);
+	vector<glm::uvec4> instanceToIndexMap;
 	for (uint32_t i = 0; i < m_materialCount; i++) {
 		ifs.read((char*)&m_vertexCount[i], sizeof(uint32_t));
 		ifs.read((char*)&m_indexCount[i], sizeof(uint32_t));
@@ -134,6 +175,42 @@ bool Mesh::loadModelCache(ID3D12Device* device, ID3D12CommandQueue* queue, uint3
 		ifs.read((char*)&m_normalImageIndex[i], sizeof(uint32_t));
 		ifs.read((char*)&m_roughMetalImageIndex[i], sizeof(uint32_t));
 	}
+
+	uint32_t vertexOffset = 0;
+	uint32_t indexOffset = 0;
+
+
+	uint32_t instanceIndexOffset = 0;
+
+	for (int i = 0; i < m_materialCount; i++) {
+		glm::vec3 aabbmin(FLT_MAX, FLT_MAX, FLT_MAX);
+		glm::vec3 aabbmax(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+		instanceIndexOffset = 0;
+		for (int j = 0; j < m_indexCount[i]; j++) {
+			aabbmin = glm::min(aabbmin, glm::vec3(m_positionArray[m_indexArray[i]]));
+			aabbmax = glm::max(aabbmax, glm::vec3(m_positionArray[m_indexArray[i]]));
+			if (j != 0 && ((j / 3) % 256 == 0 || j == m_indexCount[i] - 1)) {
+
+				aabbmin = glm::vec3(FLT_MAX, FLT_MAX, FLT_MAX);
+				aabbmax = glm::vec3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+
+				m_instanceArray.emplace_back(aabbmin, aabbmax, instanceIndexOffset, j % 256, i);
+
+				instanceIndexOffset = j;
+			}
+		}
+
+		vertexOffset += m_vertexCount[i];
+		indexOffset += m_indexCount[i];
+	}
+
+	m_instanceBuffer = ResourceManager::Instance().createStructuredBuffer(device, queue, 1, sizeof(Instance), m_instanceArray.size(), m_instanceArray.data());
+
+	m_positionBuffer = ResourceManager::Instance().createStructuredBuffer(device, queue, 1, (UINT)sizeof(glm::vec4), (UINT)m_positionArray.size(), m_positionArray.data());
+	m_normalBuffer = ResourceManager::Instance().createStructuredBuffer(device, queue, 1, (UINT)sizeof(glm::vec4), (UINT)m_normalArray.size(), m_normalArray.data());
+	m_tangentBuffer = ResourceManager::Instance().createStructuredBuffer(device, queue, 1, (UINT)sizeof(glm::vec4), (UINT)m_tangentArray.size(), m_tangentArray.data());
+	m_uvBuffer = ResourceManager::Instance().createStructuredBuffer(device, queue, 1, (UINT)sizeof(glm::vec4), (UINT)m_uvArray.size(), m_uvArray.data());
+	m_indexBuffer = ResourceManager::Instance().createStructuredBuffer(device, queue, 1, (UINT)sizeof(uint32_t), (UINT)m_indexArray.size(), m_indexArray.data());
 
 	ifs.read((char*)&m_imageCount, sizeof(uint32_t));
 	m_imageDatas.resize(m_imageCount);
@@ -145,13 +222,12 @@ bool Mesh::loadModelCache(ID3D12Device* device, ID3D12CommandQueue* queue, uint3
 		ifs.read((char*)&m_imageHeights[i], sizeof(uint32_t));
 		m_imageDatas[i].resize(m_imageWidths[i] * m_imageHeights[i] * 4);
 		ifs.read((char*)m_imageDatas[i].data(), m_imageWidths[i] * m_imageHeights[i] * 4);
-		if (!m_images[i].createResource(device, queue, bufferCount, m_imageWidths[i], m_imageHeights[i], 4, m_imageDatas[i].data(), true))
-			abort();
+		m_images[i] = ResourceManager::Instance().createTexture(device, queue, 1, m_imageWidths[i], m_imageHeights[i], 4, m_imageDatas[i].data(), false);
 
 		vector<unsigned char>().swap(m_imageDatas[i]);
 	}
 
-	m_texcoord.resize(m_indexArray.size());
+	m_texcoord.resize(m_allIndexCount);
 	ifs.read((char*)m_texcoord.data(), sizeof(glm::vec2) * m_texcoord.size());
 
 	ifs.close();
@@ -159,7 +235,7 @@ bool Mesh::loadModelCache(ID3D12Device* device, ID3D12CommandQueue* queue, uint3
 	return true;
 }
 
-void Mesh::saveModelCache() {
+void Model::saveModelCache() {
 
 	ofstream ofs;
 	ofstream txt;
@@ -172,7 +248,10 @@ void Mesh::saveModelCache() {
 	ofs.write((const char*)&m_materialCount, sizeof(uint32_t));
 	ofs.write((const char*)&m_allVertexCount, sizeof(uint32_t));
 	ofs.write((const char*)&m_allIndexCount, sizeof(uint32_t));
-	ofs.write((const char*)m_vertexArray.data(), sizeof(Vertex) * m_allVertexCount);
+	ofs.write((const char*)m_positionArray.data(), sizeof(glm::vec4) * m_allVertexCount);
+	ofs.write((const char*)m_normalArray.data(), sizeof(glm::vec4) * m_allVertexCount);
+	ofs.write((const char*)m_tangentArray.data(), sizeof(glm::vec4) * m_allVertexCount);
+	ofs.write((const char*)m_uvArray.data(), sizeof(glm::vec4) * m_allVertexCount);
 	ofs.write((const char*)m_indexArray.data(), sizeof(uint32_t) * m_allIndexCount);
 	txt << "MaterialCount:" << m_materialCount << endl;
 	txt << "AllVertexCount:" << m_allVertexCount << endl;
@@ -203,18 +282,18 @@ void Mesh::saveModelCache() {
 }
 
 
-bool Mesh::calculateUV(ID3D12Device* dev) {
+bool Model::calculateUV(ID3D12Device* dev, ID3D12CommandQueue* queue) {
 	xatlas::MeshDecl decl{};
 	decl.indexCount = m_indexArray.size();
 	decl.indexData = m_indexArray.data();
 	decl.indexFormat = xatlas::IndexFormat::UInt32;
-	decl.vertexCount = m_vertexArray.size();
-	decl.vertexPositionData = m_posArray.data();
-	decl.vertexPositionStride = sizeof(glm::vec3);
-	decl.vertexNormalData = m_norArray.data();
-	decl.vertexNormalStride = sizeof(glm::vec3);
+	decl.vertexCount = m_allVertexCount;
+	decl.vertexPositionData = m_positionArray.data();
+	decl.vertexPositionStride = sizeof(glm::vec4);
+	decl.vertexNormalData = m_normalArray.data();
+	decl.vertexNormalStride = sizeof(glm::vec4);
 	decl.vertexUvStride = sizeof(glm::vec2);
-	decl.vertexUvData = m_texcoord.data();
+	decl.vertexUvData = m_uvArray.data();
 	xatlas::Atlas* atlas = xatlas::Create();
 	xatlas::AddMesh(atlas, decl, 0);
 	xatlas::ChartOptions chartOpt{};
@@ -246,8 +325,7 @@ bool Mesh::calculateUV(ID3D12Device* dev) {
 		tex.push_back(glm::vec4(m_texcoord[i], 0.0f, 0.0f));
 	}
 
-	if (!m_uvBuffer.create(dev, 1, sizeof(glm::vec4), tex.size(), false))
-		return false;
+		m_uv2Buffer = ResourceManager::Instance().createStructuredBuffer(dev, queue, 1, (UINT)sizeof(glm::vec4), (UINT)m_uvArray.size(), m_uvArray.data());
 
 	return true;
 }
@@ -255,6 +333,9 @@ bool Mesh::calculateUV(ID3D12Device* dev) {
 
 bool MeshManager::createMeshFromGltf(ID3D12Device* dev, ID3D12CommandQueue* queue,
 	uint32_t bufferCount, const char* filename, bool binary) {
+	if (m_meshArray.find(filename) == m_meshArray.end()) {
+		m_meshArray[filename] = std::make_unique<Model>();
+	}
 	if (!m_meshArray[filename]->createFromGltf(dev, queue, bufferCount, filename, binary))
 		return false;
 
