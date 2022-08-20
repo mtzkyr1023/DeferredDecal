@@ -52,6 +52,8 @@ public:
 	int getIndexBuffer() { return m_indexBuffer; }
 	int getInstanceBuffer() { return m_instanceBuffer; }
 
+	int getOffsetBuffer() { return m_offsetBuffer; }
+
 	uint32_t getAllVertexCount() { return m_allVertexCount; }
 	uint32_t getAllIndexCount() { return m_allIndexCount; }
 
@@ -62,19 +64,19 @@ public:
 
 	int getAlbedoTexture(uint32_t num) {
 		if (m_albedoImageIndex[num] == 0xffffffff)
-			return -1;
+			return m_defaultImage;
 		else
 			return m_images[m_albedoImageIndex[num]];
 	}
 	int getNormalTexture(uint32_t num) {
 		if (m_normalImageIndex[num] == 0xffffffff)
-			return -1;
+			return m_defaultImage;
 		else
 			return m_images[m_normalImageIndex[num]];
 	}
 	int getRoughMetalTexture(uint32_t num) {
 		if (m_roughMetalImageIndex[num] == 0xffffffff)
-			return -1;
+			return m_defaultImage;
 		else
 			return m_images[m_roughMetalImageIndex[num]];
 	}
@@ -111,8 +113,11 @@ private:
 
 	int m_instanceBuffer;
 
+	int m_offsetBuffer;
+
 	std::string m_filename;
 
+	int m_defaultImage;
 	std::vector<int> m_images;
 	std::vector<uint32_t> m_albedoImageIndex;
 	std::vector<uint32_t> m_normalImageIndex;

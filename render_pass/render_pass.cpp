@@ -52,6 +52,21 @@ int ResourceManager::createRenderTarget2D(ID3D12Device* device, UINT resourceCou
 	return id;
 }
 
+int ResourceManager::createRenderTarget2DArray(ID3D12Device* device, UINT resourceCount, D3D12_RESOURCE_FLAGS flags,
+	DXGI_FORMAT format, UINT width, UINT height, UINT depth) {
+	int id = m_uniqueId;
+	if (m_resourceArray.find(id) != m_resourceArray.end()) m_resourceArray.erase(id);
+	m_resourceArray[id] = std::make_unique<Texture>();
+	if (!static_cast<Texture*>(m_resourceArray[id].get())->createRenderTarget2DArray(device, resourceCount, flags, format, width, height, depth))
+		return -1;
+
+	m_resourceArray[id]->setId(id);
+
+	m_uniqueId++;
+
+	return id;
+}
+
 int ResourceManager::createTexture(ID3D12Device* device, ID3D12CommandQueue* queue, UINT resourceCount, DXGI_FORMAT format,
 	const char* filename, bool isMipmap) {
 	int id = m_uniqueId;
@@ -218,6 +233,7 @@ void ResourceManager::updateDescriptorHeap(Device* device) {
 	std::vector<Resource*> depthStencil;
 	int shaderResourceCount = 0;
 	int renderTargetCount = 0;
+	int depthStencilCount = 0;
 
 	for (auto& ite : m_resourceArray) {
 		switch (ite.second->GetResourceType()) {
@@ -248,6 +264,7 @@ void ResourceManager::updateDescriptorHeap(Device* device) {
 			Texture* tex = static_cast<Texture*>(ite.second.get());
 			if (tex->isDepthStencil()) {
 				depthStencil.push_back(ite.second.get());
+				depthStencilCount += ite.second->getResourceCount();
 			}
 			if (tex->isShaderResource()) {
 				shaderResource.push_back(ite.second.get());
@@ -256,6 +273,9 @@ void ResourceManager::updateDescriptorHeap(Device* device) {
 			if (tex->isRenderTarget()) {
 				renderTarget.push_back(ite.second.get());
 				renderTargetCount += ite.second->getResourceCount();
+				if (tex->getDepth() != 1) {
+					renderTargetCount += tex->getDepth() - 1;
+				}
 			}
 		}
 			break;
@@ -272,7 +292,7 @@ void ResourceManager::updateDescriptorHeap(Device* device) {
 	if(renderTarget.size() != 0)
 		m_rtvHeap.create(device->getDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, (UINT)renderTargetCount);
 	if (depthStencil.size() != 0)
-		m_dsvHeap.create(device->getDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, (UINT)depthStencil.size());
+		m_dsvHeap.create(device->getDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, (UINT)depthStencilCount);
 
 	if (m_samplerStateTable.size() != 0)
 		m_samplerHeap.create(device->getDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, (UINT)m_samplerStateTable.size());
@@ -408,8 +428,6 @@ void ResourceManager::updateDescriptorHeap(Device* device) {
 						offset++;
 					}
 				}
-
-				m_shaderResourceDescriptorTable[tex->getId()] = { start, tex->getResourceCount() };
 			}
 
 			if (tex->isUnorderedAccess()) {
@@ -458,6 +476,8 @@ void ResourceManager::updateDescriptorHeap(Device* device) {
 					offset++;
 				}
 			}
+
+			m_shaderResourceDescriptorTable[tex->getId()] = { start, tex->getResourceCount() + offset - start };
 		}
 		else if (shaderResource[i]->GetResourceType() == ResourceType::kConstanceBuffer) {
 			ConstantBuffer* cb = static_cast<ConstantBuffer*>(shaderResource[i]);
@@ -556,19 +576,35 @@ void ResourceManager::updateDescriptorHeap(Device* device) {
 
 		int start = offset;
 		for (int j = 0; j < tex->getResourceCount(); j++) {
-			D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};
-			rtvDesc.Format = tex->getFormat();
-			rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-			rtvDesc.Texture2D.MipSlice = 0;
-			rtvDesc.Texture2D.PlaneSlice = 0;
+			if (tex->getDepth() == 1) {
+				D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};
+				rtvDesc.Format = tex->getFormat();
+				rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+				rtvDesc.Texture2D.MipSlice = 0;
+				rtvDesc.Texture2D.PlaneSlice = 0;
 
-			auto rtvHandle = m_rtvHeap.getCpuHandle(offset);
-			device->getDevice()->CreateRenderTargetView(tex->getResource(j), &rtvDesc, rtvHandle);
+				auto rtvHandle = m_rtvHeap.getCpuHandle(offset);
+				device->getDevice()->CreateRenderTargetView(tex->getResource(j), &rtvDesc, rtvHandle);
 
-			offset++;
+				offset++;
+			}
+			else {
+				for (int k= 0; k < tex->getDepth(); k++) {
+					D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};
+					rtvDesc.Format = tex->getFormat();
+					rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+					rtvDesc.Texture2DArray.FirstArraySlice = k;
+					rtvDesc.Texture2DArray.ArraySize = 1;
+
+					auto rtvHandle = m_rtvHeap.getCpuHandle(offset);
+					device->getDevice()->CreateRenderTargetView(tex->getResource(j), &rtvDesc, rtvHandle);
+
+					offset++;
+				}
+			}
 		}
 
-		m_renderTargetDescriptorTable[tex->getId()] = { start, tex->getResourceCount() };
+		m_renderTargetDescriptorTable[tex->getId()] = { start, offset - start };
 	}
 
 	offset = 0;
@@ -576,7 +612,6 @@ void ResourceManager::updateDescriptorHeap(Device* device) {
 		Texture* tex = static_cast<Texture*>(depthStencil[i]);
 
 		int start = offset;
-		int offset = 0;
 		for (int j = 0; j < tex->getResourceCount(); j++) {
 			D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{};
 			if (tex->getFormat() == DXGI_FORMAT_R32_TYPELESS) {

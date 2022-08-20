@@ -82,6 +82,7 @@ public:
 	int createBackBuffer(ID3D12Device* device, IDXGISwapChain3* swapchain, UINT backBufferCount);
 	int createDepthStencilBuffer(ID3D12Device* device, UINT textureCount, UINT width, UINT height, bool isStencil);
 	int createRenderTarget2D(ID3D12Device* device, UINT resourceCount, D3D12_RESOURCE_FLAGS flags, DXGI_FORMAT format, UINT width, UINT height);
+	int createRenderTarget2DArray(ID3D12Device* device, UINT resourceCount, D3D12_RESOURCE_FLAGS flags, DXGI_FORMAT format, UINT width, UINT height, UINT depth);
 	int createTexture(ID3D12Device* device, ID3D12CommandQueue* queue, UINT resourceCount, DXGI_FORMAT format,
 		const char* filename, bool isMipmap);
 	int createTexture(ID3D12Device* device, ID3D12CommandQueue* queue, UINT resourceCount, UINT width, UINT height, UINT componentCount, void* data, bool isMipmap);

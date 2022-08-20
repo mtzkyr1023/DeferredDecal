@@ -24,7 +24,7 @@ bool Texture::createBackBuffer(ID3D12Device* device, IDXGISwapChain3* swapchain,
 	m_mipCount = 1;
 
 	m_isShaderResource = false;
-	m_isUnorderedAccess = false;
+	m_isUnorderedAccess = true;
 	m_isRenderTarget = true;
 	m_isDepthStencil = false;
 
@@ -151,13 +151,13 @@ bool Texture::createRenderTarget2DArray(ID3D12Device* device, UINT textureCount,
 	m_mipCount = 1;
 
 
-	m_isShaderResource = false;
+	m_isShaderResource = true;
 	m_isUnorderedAccess = false;
 	m_isRenderTarget = true;
 	m_isDepthStencil = false;
 
 	if ((D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS & flags) == D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) m_isUnorderedAccess = true;
-	if ((D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE & flags) == D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) m_isShaderResource = true;
+	if ((D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE & flags) == D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) m_isShaderResource = false;
 
 	return true;
 }
@@ -203,13 +203,13 @@ bool Texture::createRenderTarget3D(ID3D12Device* device, UINT textureCount, D3D1
 
 	m_mipCount = 1;
 
-	m_isShaderResource = false;
+	m_isShaderResource = true;
 	m_isUnorderedAccess = false;
 	m_isRenderTarget = true;
 	m_isDepthStencil = false;
 
 	if ((D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS & flag) == D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) m_isUnorderedAccess = true;
-	if ((D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE & flag) == D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) m_isShaderResource = true;
+	if ((D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE & flag) == D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) m_isShaderResource = false;
 
 	return true;
 }

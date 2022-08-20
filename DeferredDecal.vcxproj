@@ -45,6 +45,8 @@
     <ClInclude Include="imgui_dx12\imstb_textedit.h" />
     <ClInclude Include="imgui_dx12\imstb_truetype.h" />
     <ClInclude Include="object\camera.h" />
+    <ClInclude Include="object\cubecamera.h" />
+    <ClInclude Include="object\shadowcamera.h" />
     <ClInclude Include="object\transform.h" />
     <ClInclude Include="render_pass\render_pass.h" />
     <ClInclude Include="system\oct_tree.h" />
@@ -52,6 +54,7 @@
     <ClInclude Include="tools\mesh_loader.h" />
     <ClInclude Include="tools\model.h" />
     <ClInclude Include="tools\my_gui.h" />
+    <ClInclude Include="tools\sh_calculator.h" />
     <ClInclude Include="tools\xatlas.h" />
   </ItemGroup>
   <ItemGroup>
@@ -77,12 +80,15 @@
     <ClCompile Include="imgui_dx12\imgui_widgets.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="object\camera.cpp" />
+    <ClCompile Include="object\cubecamera.cpp" />
+    <ClCompile Include="object\shadowcamera.cpp" />
     <ClCompile Include="object\transform.cpp" />
     <ClCompile Include="render_pass\render_pass.cpp" />
     <ClCompile Include="tools\input.cpp" />
     <ClCompile Include="tools\mesh_loader.cpp" />
     <ClCompile Include="tools\model.cpp" />
     <ClCompile Include="tools\my_gui.cpp" />
+    <ClCompile Include="tools\sh_calculator.cpp" />
     <ClCompile Include="tools\xatlas.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
