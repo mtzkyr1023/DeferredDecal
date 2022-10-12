@@ -45,6 +45,17 @@
     <ClInclude Include="imgui_dx12\imstb_textedit.h" />
     <ClInclude Include="imgui_dx12\imstb_truetype.h" />
     <ClInclude Include="object\camera.h" />
+    <ClInclude Include="object\collision.h" />
+    <ClInclude Include="object\collision\collision_character_controller.h" />
+    <ClInclude Include="object\collision\collision_debug_drawer.h" />
+    <ClInclude Include="object\collision\collision_manager.h" />
+    <ClInclude Include="object\collision\collision_object.h" />
+    <ClInclude Include="object\collision\collision_ghost_object.h" />
+    <ClInclude Include="object\collision\collision_rigid_body.h" />
+    <ClInclude Include="object\enemy\enemy.h" />
+    <ClInclude Include="object\player\player.h" />
+    <ClInclude Include="object\renderer\mesh_renderer.h" />
+    <ClInclude Include="object\renderer\renderer_manager.h" />
     <ClInclude Include="object\cubecamera.h" />
     <ClInclude Include="object\shadowcamera.h" />
     <ClInclude Include="object\transform.h" />
@@ -80,7 +91,16 @@
     <ClCompile Include="imgui_dx12\imgui_widgets.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="object\camera.cpp" />
+    <ClCompile Include="object\collision\collision_character_controller.cpp" />
+    <ClCompile Include="object\collision\collision_debug_draw.cpp" />
+    <ClCompile Include="object\collision\collision_ghost_object.cpp" />
+    <ClCompile Include="object\collision\collision_manager.cpp" />
+    <ClCompile Include="object\collision\collision_rigid_body.cpp" />
+    <ClCompile Include="object\enemy\enemy.cpp" />
+    <ClCompile Include="object\player\player.cpp" />
+    <ClCompile Include="object\renderer\mesh_renderer.cpp" />
     <ClCompile Include="object\cubecamera.cpp" />
+    <ClCompile Include="object\renderer\renderer_manager.cpp" />
     <ClCompile Include="object\shadowcamera.cpp" />
     <ClCompile Include="object\transform.cpp" />
     <ClCompile Include="render_pass\render_pass.cpp" />
@@ -149,6 +169,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>E:\works_pace_e\bullet3-3.24\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)$(ProjectName)$(TargetExt)</OutputFile>
@@ -160,12 +181,14 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\mtzky\Documents\meshoptimizer-master\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>E:\works_pace_e\bullet3-3.24\src;C:\Users\mtzky\Documents\meshoptimizer-master\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>BT_THREADSAFE=1;BT_USE_DOUBLE_PRECISION;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <ManifestFile>$(SolutionDir)$(IntDir)$(TargetName)$(TargetExt).intermediate.manifest</ManifestFile>
-      <AdditionalLibraryDirectories>C:\Users\mtzky\Documents\meshoptimizer-master\bin\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>meshoptimizer.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>E:\works_pace_e\bullet3-3.24\bin;C:\Users\mtzky\Documents\meshoptimizer-master\bin\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>meshoptimizer.lib;BulletCollision_vs2010_x64_debug.lib;BulletDynamics_vs2010_x64_debug.lib;LinearMath_vs2010_x64_debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -190,13 +213,13 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\mtzky\Documents\meshoptimizer-master\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>E:\works_pace_e\bullet3-3.24\src;C:\Users\mtzky\Documents\meshoptimizer-master\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>C:\Users\mtzky\Documents\meshoptimizer-master\bin\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>meshoptimizer.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>E:\works_pace_e\bullet3-3.24\bin;C:\Users\mtzky\Documents\meshoptimizer-master\bin\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>meshoptimizer.lib;Bullet3Collision_vs2010_x64_release.lib;Bullet3Common_vs2010_x64_release.lib;Bullet3Geometry_vs2010_x64_release.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

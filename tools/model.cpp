@@ -2,6 +2,7 @@
 #include "mesh_loader.h"
 #include "xatlas.h"
 #include "../render_pass/render_pass.h"
+#include "GLTFLoader.h"
 
 #include <fstream>
 
@@ -90,6 +91,9 @@ bool Model::createFromGltf(ID3D12Device* dev, ID3D12CommandQueue* queue, uint32_
 		m_normalImageIndex[i] = loader.getNormalImageIndex(i);
 		m_roughMetalImageIndex[i] = loader.getPbrImageIndex(i);
 
+		if (m_indexArray.size() == 0) {
+			continue;
+		}
 		if (i != 0) {
 			indexOffsetArray.push_back(m_indexArray.back());
 		}
@@ -98,18 +102,47 @@ bool Model::createFromGltf(ID3D12Device* dev, ID3D12CommandQueue* queue, uint32_
 		}
 	}
 
+	uint32_t vertexOffset = 0;
+	uint32_t indexOffset = 0;
+
+
+	uint32_t instanceIndexOffset = 0;
+
+	std::vector<uint32_t> offsetBuffer;
+
+	for (int i = 0; i < m_materialCount; i++) {
+		glm::vec3 aabbmin(FLT_MAX, FLT_MAX, FLT_MAX);
+		glm::vec3 aabbmax(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+		instanceIndexOffset = 0;
+		for (int j = 0; j < m_indexCount[i]; j++) {
+			aabbmin = glm::min(aabbmin, glm::vec3(m_positionArray[m_indexArray[i]]));
+			aabbmax = glm::max(aabbmax, glm::vec3(m_positionArray[m_indexArray[i]]));
+			if (j != 0 && ((j / 3) % 256 == 0 || j == m_indexCount[i] - 1)) {
+
+				aabbmin = glm::vec3(FLT_MAX, FLT_MAX, FLT_MAX);
+				aabbmax = glm::vec3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+
+				m_instanceArray.emplace_back(aabbmin, aabbmax, instanceIndexOffset, j % 256, i);
+
+				instanceIndexOffset = j;
+			}
+		}
+
+		offsetBuffer.push_back(indexOffset);
+
+		vertexOffset += m_vertexCount[i];
+		indexOffset += m_indexCount[i];
+	}
+
 	m_positionBuffer = ResourceManager::Instance().createStructuredBuffer(dev, queue, 1, (UINT)sizeof(glm::vec4), (UINT)m_positionArray.size(), m_positionArray.data());
 	m_normalBuffer = ResourceManager::Instance().createStructuredBuffer(dev, queue, 1, (UINT)sizeof(glm::vec4), (UINT)m_normalArray.size(), m_normalArray.data());
 	m_tangentBuffer = ResourceManager::Instance().createStructuredBuffer(dev, queue, 1, (UINT)sizeof(glm::vec4), (UINT)m_tangentArray.size(), m_tangentArray.data());
 	m_uvBuffer = ResourceManager::Instance().createStructuredBuffer(dev, queue, 1, (UINT)sizeof(glm::vec4), (UINT)m_uvArray.size(), m_uvArray.data());
 	m_indexBuffer = ResourceManager::Instance().createStructuredBuffer(dev, queue, 1, (UINT)sizeof(uint32_t), (UINT)m_indexArray.size(), m_indexArray.data());
 
-	m_offsetBuffer = ResourceManager::Instance().createStructuredBuffer(dev, queue, 1, (UINT)sizeof(uint32_t), m_materialCount, indexOffsetArray.data());
+	m_offsetBuffer = ResourceManager::Instance().createStructuredBuffer(dev, queue, 1, (UINT)sizeof(uint32_t), m_materialCount, offsetBuffer.data());
 
-	int vertexOffset = 0;
-	int indexOffset = 0;
 
-	uint32_t instanceIndexOffset = 0;
 	uint32_t currentIndexCount = 0;
 
 	for (int i = 0; i < m_materialCount; i++) {
@@ -159,6 +192,7 @@ bool Model::createFromGltf(ID3D12Device* dev, ID3D12CommandQueue* queue, uint32_
 	//	return false;
 
 	saveModelCache();
+
 
 	return true;
 }
@@ -250,7 +284,7 @@ bool Model::loadModelCache(ID3D12Device* device, ID3D12CommandQueue* queue, uint
 		ifs.read((char*)&m_imageHeights[i], sizeof(uint32_t));
 		m_imageDatas[i].resize(m_imageWidths[i] * m_imageHeights[i] * 4);
 		ifs.read((char*)m_imageDatas[i].data(), m_imageWidths[i] * m_imageHeights[i] * 4);
-		m_images[i] = ResourceManager::Instance().createTexture(device, queue, 1, m_imageWidths[i], m_imageHeights[i], 4, m_imageDatas[i].data(), false);
+ 		m_images[i] = ResourceManager::Instance().createTexture(device, queue, 1, m_imageWidths[i], m_imageHeights[i], 4, m_imageDatas[i].data(), false);
 
 		vector<unsigned char>().swap(m_imageDatas[i]);
 	}
@@ -259,6 +293,8 @@ bool Model::loadModelCache(ID3D12Device* device, ID3D12CommandQueue* queue, uint
 	ifs.read((char*)m_texcoord.data(), sizeof(glm::vec2) * m_texcoord.size());
 
 	ifs.close();
+
+
 
 	return true;
 }
@@ -356,6 +392,65 @@ bool Model::calculateUV(ID3D12Device* dev, ID3D12CommandQueue* queue) {
 		m_uv2Buffer = ResourceManager::Instance().createStructuredBuffer(dev, queue, 1, (UINT)sizeof(glm::vec4), (UINT)m_uvArray.size(), m_uvArray.data());
 
 	return true;
+}
+
+
+void Model::createBundle(ID3D12Device* dev, ID3D12RootSignature* rootSignature) {
+	CommandAllocator commandAllocator;
+	commandAllocator.createBundleCommandAllocator(dev);
+	m_bundle.createBundleCommandList(dev, commandAllocator.getCommandAllocator());
+
+	commandAllocator.getCommandAllocator()->Reset();
+	auto command = m_bundle.getCommandList();
+
+	command->Reset(commandAllocator.getCommandAllocator(), nullptr);
+
+	auto& resMgr = ResourceManager::Instance();
+
+	{
+		auto positionBufferSrv = resMgr.getShaderResourceGpuHandle(m_positionBuffer, 0);
+		auto normalBufferSrv = resMgr.getShaderResourceGpuHandle(m_normalBuffer, 0);
+		auto tangentBufferSrv = resMgr.getShaderResourceGpuHandle(m_tangentBuffer, 0);
+		auto indexBufferSrv = resMgr.getShaderResourceGpuHandle(m_indexBuffer, 0);
+		auto indexOffsetHandle = resMgr.getShaderResourceGpuHandle(m_offsetBuffer, 0);
+		auto uvHandle = resMgr.getShaderResourceGpuHandle(m_uvBuffer, 0);
+
+		ID3D12DescriptorHeap* descHeaps[] = {
+			resMgr.getShaderResourceHeap()->getDescriptorHeap(),
+			resMgr.getSamplerHeap()->getDescriptorHeap(),
+		};
+
+
+		command->SetDescriptorHeaps(1, descHeaps);
+
+		command->SetGraphicsRootSignature(rootSignature);
+
+		command->SetGraphicsRootDescriptorTable(1, positionBufferSrv);
+		command->SetGraphicsRootDescriptorTable(2, normalBufferSrv);
+		command->SetGraphicsRootDescriptorTable(3, tangentBufferSrv);
+		command->SetGraphicsRootDescriptorTable(4, uvHandle);
+		command->SetGraphicsRootDescriptorTable(5, indexBufferSrv);
+		command->SetGraphicsRootDescriptorTable(6, indexOffsetHandle);
+
+		command->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		int indexOffset = 0;
+		for (int i = 0; i < m_materialCount; i++) {
+			auto albedoSrvHandle = resMgr.getShaderResourceGpuHandle(m_albedoImageIndex[i], 0);
+			auto normalSrvHandle = resMgr.getShaderResourceGpuHandle(m_normalImageIndex[i], 0);
+			auto roughMetalSrvHandle = resMgr.getShaderResourceGpuHandle(m_roughMetalImageIndex[i], 0);
+			command->SetGraphicsRootDescriptorTable(7, albedoSrvHandle);
+			command->SetGraphicsRootDescriptorTable(8, normalSrvHandle);
+			command->SetGraphicsRootDescriptorTable(9, roughMetalSrvHandle);
+
+			command->DrawInstanced(m_indexCount[i], i + 1, 0, i);
+
+			indexOffset += m_indexCount[i];
+		}
+
+	}
+
+	command->Close();
 }
 
 

@@ -11,7 +11,7 @@ public:
 	MyGui() = default;
 	~MyGui() = default;
 
-	bool create(HWND hwnd, ID3D12Device* device, DXGI_FORMAT format, UINT backBufferCount);
+	bool create(HWND hwnd, ID3D12Device* device, DXGI_FORMAT format, UINT backBufferCount, ID3D12DescriptorHeap* descHeap);
 	void destroy();
 
 	void renderFrame(ID3D12GraphicsCommandList* command);

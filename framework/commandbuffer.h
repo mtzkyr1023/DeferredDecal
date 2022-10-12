@@ -13,6 +13,7 @@ public:
 
 	bool createGraphicsCommandAllocator(ID3D12Device* device);
 	bool createComputeCommandAllocator(ID3D12Device* device);
+	bool createBundleCommandAllocator(ID3D12Device* device);
 
 	ID3D12CommandAllocator* getCommandAllocator() { return m_commandAllocator.Get(); }
 
@@ -27,6 +28,8 @@ public:
 
 	bool createGraphicsCommandList(ID3D12Device* device, ID3D12CommandAllocator* commandAllocator);
 	bool createComputeCommandList(ID3D12Device* device, ID3D12CommandAllocator* commandAllocator);
+
+	bool createBundleCommandList(ID3D12Device* device, ID3D12CommandAllocator* commandAllocator);
 
 	ID3D12GraphicsCommandList* getCommandList() { return m_commandList.Get(); }
 

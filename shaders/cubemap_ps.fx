@@ -10,7 +10,7 @@ struct PS_IN {
 	float3 tex : TEXCOORD0;
 };
 
-float4 main(PS_IN input) : SV_Target0{
+float4 main(PS_IN input) : SV_Target0 {
 	
 
 	float4 color = cubeMap.Sample(wrapSampler, input.tex);

@@ -3,6 +3,7 @@
 
 #include "../framework/buffer.h"
 #include "../framework/texture.h"
+#include "../framework/commandbuffer.h"
 
 #include <unordered_map>
 #include <memory>
@@ -63,18 +64,24 @@ public:
 	uint32_t getIndexCount(uint32_t num) { return m_indexCount[num]; }
 
 	int getAlbedoTexture(uint32_t num) {
+		if(m_images.size() <= num)
+			return m_defaultImage;
 		if (m_albedoImageIndex[num] == 0xffffffff)
 			return m_defaultImage;
 		else
 			return m_images[m_albedoImageIndex[num]];
 	}
 	int getNormalTexture(uint32_t num) {
+		if (m_images.size() <= num)
+			return m_defaultImage;
 		if (m_normalImageIndex[num] == 0xffffffff)
 			return m_defaultImage;
 		else
 			return m_images[m_normalImageIndex[num]];
 	}
 	int getRoughMetalTexture(uint32_t num) {
+		if (m_images.size() <= num)
+			return m_defaultImage;
 		if (m_roughMetalImageIndex[num] == 0xffffffff)
 			return m_defaultImage;
 		else
@@ -98,6 +105,10 @@ public:
 
 	uint32_t getInstanceCount() { return (uint32_t)m_instanceArray.size(); }
 
+	ID3D12GraphicsCommandList* getBundle() { return m_bundle.getCommandList(); }
+
+	void createBundle(ID3D12Device* device, ID3D12RootSignature* rootSignature);
+
 private:
 	bool loadModelCache(ID3D12Device* device, ID3D12CommandQueue* queue, uint32_t bufferCount);
 	void saveModelCache();
@@ -109,6 +120,10 @@ private:
 	int m_tangentBuffer;
 	int m_uvBuffer;
 	int m_uv2Buffer;
+
+	int m_weightBuffer;
+	int m_boneIndexBuffer;
+
 	int m_indexBuffer;
 
 	int m_instanceBuffer;
@@ -147,6 +162,8 @@ private:
 	std::vector<uint32_t> m_indexArray;
 
 	std::vector<Instance> m_instanceArray;
+
+	CommandList m_bundle;
 };
 	
 

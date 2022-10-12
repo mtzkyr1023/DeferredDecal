@@ -7,7 +7,7 @@
 
 class ShadowCamera {
 public:
-	ShadowCamera(const glm::vec3& position, const glm::quat& rotation, float width, float height, float nearZ  = 0.1f, float farZ = 1000.0f);
+	ShadowCamera(const glm::vec3& position, const glm::vec3& rotation, float width, float height, float nearZ  = 0.1f, float farZ = 1000.0f);
 	~ShadowCamera();
 
 	void Update();

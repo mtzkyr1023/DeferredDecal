@@ -261,7 +261,7 @@ bool Texture::createDepthStencilBuffer(ID3D12Device* device, UINT textureCount, 
 
 	m_format = DXGI_FORMAT_R32_TYPELESS;
 
-	m_isShaderResource = false;
+	m_isShaderResource = true;
 	m_isUnorderedAccess = false;
 	m_isRenderTarget = false;
 	m_isDepthStencil = true;

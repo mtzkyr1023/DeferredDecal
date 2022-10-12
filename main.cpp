@@ -1,7 +1,7 @@
 #define     NAME    "WINDOW"  //タイトルバーに表示するテキスト
 
 #pragma comment(lib, "d3dcompiler.lib")
-
+#define NOMINMAX
 #include <windows.h>
 #include <crtdbg.h>
 #include <iostream>

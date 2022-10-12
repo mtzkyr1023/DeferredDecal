@@ -14,9 +14,7 @@ struct MatrixBuffer {
 	float4x4 viewMatrix;
 	float4x4 projMatrix;
 	float4x4 worldMatrix;
-	float4 viewPos;
-	float4 viewPos2;
-	float4x2 padding2;
+	float4x4 padding2;
 };
 
 cbuffer ViewProjBuffer : register(b0) {
@@ -35,23 +33,23 @@ struct PS_IN {
 	float3 tan : NORMAL1;
 	float3 binor : NORMAL2;
 	float2 tex : TEXCOORD0;
-	float3 wpos : TEXCOORD1;
+	float linearZ : TEXCOORD1;
 };
 
 
 PS_OUT main(PS_IN input){
 	
 	PS_OUT output = (PS_OUT)0;
-	
+		
 	float4 color = albedoTex.Sample(wrapSampler, input.tex);
 	
-	float4 bump = normalTex.Sample(wrapSampler, input.tex);
+	float3 bump = normalTex.Sample(wrapSampler, input.tex).xyz * 2.0f - float3(1.0f, 1.0f, 1.0f);
 	
-	float3 normal = normalize(input.tangent * bump.x + input.binormal * bump.y + input.normal * bump.z);
+	float3 normal = normalize(input.tan * bump.x + input.binor * bump.y + input.nor * bump.z);
 	
 	output.albedo = color;
-	output.normal = float4(normal, 0.0f);
-	output.roughMetal = roughMetalTex.Sample(wrapSampler, input.tex).rg;
+	output.normal = float4(normal, input.linearZ);
+	output.roughMetal = roughMetalTex.Sample(wrapSampler, input.tex);
 	
 	return output;
 }

@@ -35,7 +35,7 @@ struct VS_OUT {
 	float3 tan : NORMAL1;
 	float3 binor : NORMAL2;
 	float2 tex : TEXCOORD0;
-	float3 wpos : TEXCOORD1;
+	float linearZ : TEXCOORD1;
 };
 
 VS_OUT main(uint vertexId : SV_VertexID, uint instanceId : SV_InstanceID) {
@@ -43,14 +43,15 @@ VS_OUT main(uint vertexId : SV_VertexID, uint instanceId : SV_InstanceID) {
 	VS_OUT output = (VS_OUT)0;
 
 	output.pos = mul(cbMatrix.worldMatrix, float4(positionBuffer[indexBuffer[vertexId + offsetBuffer[instanceId]]].xyz, 1.0f));
-	output.wpos = output.pos.xyz;
 	output.pos = mul(cbMatrix.viewMatrix, output.pos);
+	//output.pos.z += 990.0f;
+	output.linearZ = output.pos.z;
 	output.pos = mul(cbMatrix.projMatrix, output.pos);
 
 	output.nor = normalize(mul((float3x3)cbMatrix.worldMatrix, normalBuffer[indexBuffer[vertexId + offsetBuffer[instanceId]]].xyz));
 	output.tan = normalize(mul((float3x3)cbMatrix.worldMatrix, tangentBuffer[indexBuffer[vertexId + offsetBuffer[instanceId]]].xyz));
 	
-	output.binor = cross(output.nor, output.tan);
+	output.binor = normalize(cross(output.tan, output.nor));
 	
 	output.tex = texcoordBuffer[indexBuffer[vertexId + offsetBuffer[instanceId]]].xy;
 

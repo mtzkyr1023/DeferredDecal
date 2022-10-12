@@ -231,7 +231,7 @@ void ResourceManager::updateDescriptorHeap(Device* device) {
 	std::vector<Resource*> shaderResource;
 	std::vector<Resource*> renderTarget;
 	std::vector<Resource*> depthStencil;
-	int shaderResourceCount = 0;
+	int shaderResourceCount = 4;
 	int renderTargetCount = 0;
 	int depthStencilCount = 0;
 

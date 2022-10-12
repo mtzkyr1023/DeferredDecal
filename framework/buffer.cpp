@@ -352,6 +352,20 @@ bool StructuredBuffer::create(ID3D12Device * dev, ID3D12CommandQueue * queue, UI
 		resDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 		resDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
+
+		D3D12_RESOURCE_DESC resDesc2{};
+		resDesc2.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+		resDesc2.Alignment = 0;
+		resDesc2.Width = (UINT64)(stride * elementCount);
+		resDesc2.Height = 1;
+		resDesc2.DepthOrArraySize = 1;
+		resDesc2.MipLevels = 1;
+		resDesc2.Format = DXGI_FORMAT_UNKNOWN;
+		resDesc2.SampleDesc.Count = 1;
+		resDesc2.SampleDesc.Quality = 0;
+		resDesc2.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+		resDesc2.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+
 		res = dev->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_GENERIC_READ,
 			nullptr, IID_PPV_ARGS(stagingBuffer.ReleaseAndGetAddressOf()));
 		if (FAILED(res)) {
@@ -375,7 +389,7 @@ bool StructuredBuffer::create(ID3D12Device * dev, ID3D12CommandQueue * queue, UI
 		heapProp.VisibleNodeMask = 1;
 
 		for (UINT i = 0; i < bufferCount; i++) {
-			res = dev->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_COPY_DEST,
+			res = dev->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &resDesc2, D3D12_RESOURCE_STATE_COPY_DEST,
 				nullptr, IID_PPV_ARGS(m_resource[i].GetAddressOf()));
 			if (FAILED(res)) {
 				return false;
@@ -396,7 +410,7 @@ bool StructuredBuffer::create(ID3D12Device * dev, ID3D12CommandQueue * queue, UI
 			barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 			barrier.Transition.pResource = m_resource[i].Get();
 			barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
-			barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+			barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 			barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 
 			command->ResourceBarrier(1, &barrier);
@@ -421,7 +435,7 @@ bool StructuredBuffer::create(ID3D12Device * dev, ID3D12CommandQueue * queue, UI
 		}
 
 		m_isCpuAccess = false;
-		m_isUnorderedAccess = false;
+		m_isUnorderedAccess = true;
 
 		return true;
 	}

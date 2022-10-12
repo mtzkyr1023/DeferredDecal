@@ -81,6 +81,9 @@ bool MeshLoader::loadMeshFromGltf(const char* filename, bool isBinary) {
 
 				if (ite.first.compare("NORMAL") == 0) {
 					glm::vec3 nor;
+					if (tempNor.size() <= j) {
+						tempNor.resize(j + 1);
+					}
 					for (size_t k = 0; k < accessor.count; k++) {
 						memcpy_s(&nor, sizeof(glm::vec3), offset + buffer.data.data() + k * sizeof(glm::vec3), sizeof(glm::vec3));
 						//						cout << "NOR:" << nor.x << "," << nor.y << "," << nor.z << endl;;
@@ -89,6 +92,9 @@ bool MeshLoader::loadMeshFromGltf(const char* filename, bool isBinary) {
 				}
 				else if (ite.first.compare("POSITION") == 0) {
 					glm::vec3 pos;
+					if (tempPos.size() <= j) {
+						tempPos.resize(j + 1);
+					}
 					for (size_t k = 0; k < accessor.count; k++) {
 						memcpy_s(&pos, sizeof(glm::vec3), offset + buffer.data.data() + k * sizeof(glm::vec3), sizeof(glm::vec3));
 						//						cout << "POS:" << pos.x << "," << pos.y << "," << pos.z << endl;;
@@ -97,6 +103,9 @@ bool MeshLoader::loadMeshFromGltf(const char* filename, bool isBinary) {
 				}
 				else if (ite.first.compare("TEXCOORD_0") == 0) {
 					glm::vec2 tex;
+					if (tempTex1.size() <= j) {
+						tempTex1.resize(j + 1);
+					}
 					for (size_t k = 0; k < accessor.count; k++) {
 						memcpy_s(&tex, sizeof(glm::vec2), offset + buffer.data.data() + k * sizeof(glm::vec2), sizeof(glm::vec2));
 						//						cout << "TEX:" << tex.x << "," << tex.y << endl;
@@ -105,6 +114,9 @@ bool MeshLoader::loadMeshFromGltf(const char* filename, bool isBinary) {
 				}
 				else if (ite.first.compare("TEXCOORD_1") == 0) {
 					glm::vec2 tex;
+					if (tempTex2.size() <= j) {
+						tempTex2.resize(j + 1);
+					}
 					for (size_t k = 0; k < accessor.count; k++) {
 						memcpy_s(&tex, sizeof(glm::vec2), offset + buffer.data.data() + k * sizeof(glm::vec2), sizeof(glm::vec2));
 						//						cout << "TEX:" << tex.x << "," << tex.y << endl;
@@ -113,6 +125,9 @@ bool MeshLoader::loadMeshFromGltf(const char* filename, bool isBinary) {
 				}
 				else if (ite.first.compare("TANGENT") == 0) {
 					glm::vec3 tan;
+					if (tempTan.size() <= j) {
+						tempTan.resize(j + 1);
+					}
 					for (size_t k = 0; k < accessor.count; k++) {
 						memcpy_s(&tan, sizeof(glm::vec3), offset + buffer.data.data() + k * sizeof(glm::vec3), sizeof(glm::vec3));
 						//						cout << "TAN:" << tan.x << "," << tan.y << "," << tan.z << endl;
@@ -121,6 +136,9 @@ bool MeshLoader::loadMeshFromGltf(const char* filename, bool isBinary) {
 				}
 				else if (ite.first.compare("WEIGHTS_0") == 0) {
 					glm::vec4 weight;
+					if (tempWeight.size() <= j) {
+						tempWeight.resize(j + 1);
+					}
 					for (size_t k = 0; k < accessor.count; k++) {
 						memcpy_s(&weight, sizeof(glm::vec4), offset + buffer.data.data() + k * sizeof(glm::vec4), sizeof(glm::vec4));
 						tempWeight[j].push_back(weight);
@@ -128,6 +146,9 @@ bool MeshLoader::loadMeshFromGltf(const char* filename, bool isBinary) {
 				}
 				else if (ite.first.compare("JOINTS_0") == 0) {
 					glm::ivec4 boneIndex;
+					if (tempIndex.size() <= j) {
+						tempIndex.resize(j + 1);
+					}
 					if (accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE) {
 						BYTE tmpIndex[4];
 						for (size_t k = 0; k < accessor.count; k++) {
@@ -166,6 +187,9 @@ bool MeshLoader::loadMeshFromGltf(const char* filename, bool isBinary) {
 
 			if (indexAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE) {
 				BYTE tmp;
+				if (tempIndexArray.size() <= j) {
+					tempIndexArray.resize(j + 1);
+				}
 				for (size_t k = 0; k < indexAccessor.count; k++) {
 					memcpy_s(&tmp, sizeof(BYTE), index.data.data() + indexAccessor.byteOffset + k * sizeof(BYTE), sizeof(BYTE));
 					//					cout << tmp << endl;
@@ -174,6 +198,9 @@ bool MeshLoader::loadMeshFromGltf(const char* filename, bool isBinary) {
 			}
 			else if (indexAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
 				USHORT tmp;
+				if (tempIndexArray.size() <= j) {
+					tempIndexArray.resize(j + 1);
+				}
 				for (size_t k = 0; k < indexAccessor.count; k++) {
 					memcpy_s(&tmp, sizeof(SHORT), index.data.data() + indexView.byteOffset + k * sizeof(SHORT), sizeof(SHORT));
 					//					cout << tmp << endl;
@@ -182,6 +209,9 @@ bool MeshLoader::loadMeshFromGltf(const char* filename, bool isBinary) {
 			}
 			else if (indexAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT) {
 				UINT tmp;
+				if (tempIndexArray.size() <= j) {
+					tempIndexArray.resize(j + 1);
+				}
 				for (size_t k = 0; k < indexAccessor.count; k++) {
 					memcpy_s(&tmp, sizeof(UINT), index.data.data() + indexView.byteOffset + k * sizeof(UINT), sizeof(UINT));
 					//					cout << tmp << endl;
@@ -283,15 +313,15 @@ bool MeshLoader::loadMeshFromGltf(const char* filename, bool isBinary) {
 					glm::vec3(tempPos[i][index2].z, tempTex1[i][index2].x, tempTex1[i][index2].y),
 				};
 
-				for (int j = 0; j < 3; j++) {
-					glm::vec3 v1 = cp1[j] - cp0[j];
-					glm::vec3 v2 = cp2[j] - cp1[j];
+				for (int k = 0; k < 3; k++) {
+					glm::vec3 v1 = cp1[k] - cp0[k];
+					glm::vec3 v2 = cp2[k] - cp1[k];
 
 					glm::vec3 ABC = glm::cross(v1, v2);
 
-					tempTan[i][index0][j] = -ABC.y / ABC.x;
-					tempTan[i][index1][j] = -ABC.y / ABC.x;
-					tempTan[i][index2][j] = -ABC.y / ABC.x;
+					tempTan[i][index0][k] = -ABC.y / ABC.x;
+					tempTan[i][index1][k] = -ABC.y / ABC.x;
+					tempTan[i][index2][k] = -ABC.y / ABC.x;
 				}
 
 				tempTan[i][index0] += glm::normalize(tempTan[i][index0]);
@@ -326,8 +356,8 @@ bool MeshLoader::loadMeshFromGltf(const char* filename, bool isBinary) {
 			m_tex1[materialMemory[i]][j] = tempTex1[i][cnt];
 			m_tex2[materialMemory[i]][j] = tempTex2[i][cnt];
 			m_tan[materialMemory[i]][j] = tempTan[i][cnt];
-//			m_weight[materialMemory[i]][j] = tempWeight[i][cnt];
-//			m_index[materialMemory[i]][j] = tempIndex[i][cnt];
+			//m_weight[materialMemory[i]][j] = tempWeight[i][cnt];
+			//m_index[materialMemory[i]][j] = tempIndex[i][cnt];
 			cnt++;
 		}
 

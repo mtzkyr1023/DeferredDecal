@@ -34,6 +34,7 @@ public:
 	void setVertexShader(IDxcBlob* blob);
 	void setGeometoryShader(IDxcBlob* blob);
 	void setPixelShader(IDxcBlob* blob);
+	void setPrimitiveType(D3D12_PRIMITIVE_TOPOLOGY_TYPE type);
 
 	ID3D12PipelineState* getPipelineState() { return m_pipelineState.Get(); }
 
@@ -52,6 +53,7 @@ private:
 	IDxcBlob* m_vertexShader = nullptr;
 	IDxcBlob* m_geometoryShader = nullptr;
 	IDxcBlob* m_pixelShader = nullptr;
+	D3D12_PRIMITIVE_TOPOLOGY_TYPE m_primitiveType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	UINT8 m_readMask;
 	UINT8 m_writeMask;
 };

@@ -66,7 +66,7 @@ bool Pipeline::create(ID3D12Device* device, ID3D12RootSignature* rootSignature) 
 	gpsDesc.DepthStencilState.StencilWriteMask = m_writeMask;
 	gpsDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
 	gpsDesc.SampleMask = UINT_MAX;
-	gpsDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	gpsDesc.PrimitiveTopologyType = m_primitiveType;
 	gpsDesc.NumRenderTargets = (UINT)m_rtvFormat.size();
 	for (UINT i = 0; i < 8 && i < m_rtvFormat.size(); i++)
 		gpsDesc.RTVFormats[i] = m_rtvFormat[i];
@@ -159,6 +159,10 @@ void Pipeline::setGeometoryShader(IDxcBlob* shader) {
 
 void Pipeline::setPixelShader(IDxcBlob* shader) {
 	m_pixelShader = shader;
+}
+
+void Pipeline::setPrimitiveType(D3D12_PRIMITIVE_TOPOLOGY_TYPE type) {
+	m_primitiveType = type;
 }
 
 
