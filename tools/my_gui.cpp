@@ -22,8 +22,8 @@ bool MyGui::create(HWND hwnd, ID3D12Device* device, DXGI_FORMAT format, UINT bac
 	ImGui_ImplWin32_Init(hwnd);
 	ImGui_ImplDX12_Init(device, backBufferCount,
 		format,
-		descHeap->GetCPUDescriptorHandleForHeapStart(),
-		descHeap->GetGPUDescriptorHandleForHeapStart());
+		m_srvDescHeap->GetCPUDescriptorHandleForHeapStart(),
+		m_srvDescHeap->GetGPUDescriptorHandleForHeapStart());
 
 	ImGui::StyleColorsDark();
 	
@@ -47,6 +47,6 @@ void MyGui::destroy() {
 }
 
 void MyGui::renderFrame(ID3D12GraphicsCommandList* command) {
-	//command->SetDescriptorHeaps(1, m_srvDescHeap.GetAddressOf());
+	command->SetDescriptorHeaps(1, m_srvDescHeap.GetAddressOf());
 	ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), command);
 }

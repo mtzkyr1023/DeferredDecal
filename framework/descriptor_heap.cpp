@@ -3,6 +3,9 @@
 bool DescriptorHeap::create(ID3D12Device* device, D3D12_DESCRIPTOR_HEAP_TYPE heapType, D3D12_DESCRIPTOR_HEAP_FLAGS heapFlags, UINT descNum) {
 	HRESULT res;
 
+	m_device = device;
+	m_heapType = heapType;
+
 	D3D12_DESCRIPTOR_HEAP_DESC dhDesc{};
 	dhDesc.NumDescriptors = descNum;
 	dhDesc.Type = heapType;
@@ -23,6 +26,15 @@ void DescriptorHeap::destroy() {
 	m_descHeap.Reset();
 }
 
+void DescriptorHeap::copyDescriptors(int destId, D3D12_CPU_DESCRIPTOR_HANDLE srcHandle) {
+
+	auto dest = m_descHeap->GetCPUDescriptorHandleForHeapStart();
+	dest.ptr += m_descriptorSize * destId;
+
+	UINT count = 1;
+
+	m_device->CopyDescriptorsSimple(1, dest, srcHandle, m_heapType);
+}
 
 D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeap::getCpuHandle(UINT num) {
 	auto handle = m_descHeap->GetCPUDescriptorHandleForHeapStart();

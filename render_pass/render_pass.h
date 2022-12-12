@@ -79,6 +79,8 @@ public:
 	int createStructuredBuffer(ID3D12Device* device, UINT bufferCount, UINT stride, UINT elementCount, bool isCpuAccess, bool isUnorderedAccess);
 	int createAppendStructuredBuffer(ID3D12Device* device, UINT bufferCount, UINT stride, UINT elementCount, bool isCpuAccess, bool isUnorderedAccess);
 	int createByteAddressBuffer(ID3D12Device* device, DXGI_FORMAT format, UINT bufferCount, UINT size, bool isUnorderedAccess);
+	int createVertexBuffer(ID3D12Device* device, ID3D12CommandQueue* queue, UINT bufferCount, UINT stride, UINT size, void* data);
+	int createIndexBuffer(ID3D12Device* device, ID3D12CommandQueue* queue, UINT bufferCount, UINT stride, UINT size, void* data);
 	int createBackBuffer(ID3D12Device* device, IDXGISwapChain3* swapchain, UINT backBufferCount);
 	int createDepthStencilBuffer(ID3D12Device* device, UINT textureCount, UINT width, UINT height, bool isStencil);
 	int createRenderTarget2D(ID3D12Device* device, UINT resourceCount, D3D12_RESOURCE_FLAGS flags, DXGI_FORMAT format, UINT width, UINT height);
@@ -103,10 +105,11 @@ public:
 
 	ShaderSp GetShader(int id) { return m_shaderTable[id]; }
 
-	void updateDescriptorHeap(Device* device);
+	void updateDescriptorHeap(Device* device, int globalHeapCount);
 	DescriptorHeap* getRtvHeap() { return &m_rtvHeap; }
 	DescriptorHeap* getShaderResourceHeap() { return &m_shaderResourceHeap; }
 	DescriptorHeap* getSamplerHeap() { return &m_samplerHeap; }
+	DescriptorHeap* getGlobalHeap() { return &m_globalHeap; }
 
 	const D3D12_CPU_DESCRIPTOR_HANDLE getShaderResourceCpuHandle(int id, int index) {
 		auto& offsetTable = m_shaderResourceDescriptorTable[id];
@@ -148,6 +151,12 @@ public:
 		return m_samplerHeap.getGpuHandle(offsetTable.start + std::min(offsetTable.offset, index));
 	}
 
+	const D3D12_GPU_DESCRIPTOR_HANDLE getGlobalHeap(int dest, int id, int index) {
+		auto& offsetTable = m_shaderResourceDescriptorTable[id];
+		m_globalHeap.copyDescriptors(dest, m_shaderResourceHeap.getCpuHandle(offsetTable.start + std::min(offsetTable.offset, index)));
+		return m_globalHeap.getGpuHandle(dest);
+	}
+
 	const DescTableInfo& getShaderResourceTableInfo(int id) { return m_shaderResourceDescriptorTable[id]; }
 	const DescTableInfo& getRenderTargetTableInfo(int id) { return m_renderTargetDescriptorTable[id]; }
 	const DescTableInfo& getDepthStencilTableInfo(int id) { return m_depthStencilDescriptorTable[id]; }
@@ -168,6 +177,8 @@ private:
 	DescriptorHeap m_dsvHeap;
 	DescriptorHeap m_rtvHeap;
 	DescriptorHeap m_samplerHeap;
+
+	DescriptorHeap m_globalHeap;
 
 	int m_uniqueId;
 };

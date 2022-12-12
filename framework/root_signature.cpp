@@ -7,7 +7,7 @@ bool RootSignature::create(ID3D12Device* device, D3D12_ROOT_SIGNATURE_FLAGS root
 	rootParam.reserve(m_range.size());
 	for(size_t i = 0; i < m_range.size(); i++) {
 		D3D12_ROOT_PARAMETER param{};
-		param.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		param.ParameterType = m_rootParameterType[i];
 		param.ShaderVisibility = m_shaderVisiblity[i];
 		param.DescriptorTable.NumDescriptorRanges = 1;
 		param.DescriptorTable.pDescriptorRanges = &m_range[i];
@@ -42,7 +42,7 @@ bool RootSignature::create(ID3D12Device* device, D3D12_ROOT_SIGNATURE_FLAGS root
 	return true;
 }
 
-void RootSignature::addDescriptorCount(D3D12_SHADER_VISIBILITY shaderVisiblity, D3D12_DESCRIPTOR_RANGE_TYPE descType, UINT baseShaderRegister, UINT count) {
+void RootSignature::addDescriptorCount(D3D12_SHADER_VISIBILITY shaderVisiblity, D3D12_DESCRIPTOR_RANGE_TYPE descType, UINT baseShaderRegister, UINT count, D3D12_ROOT_PARAMETER_TYPE type) {
 	D3D12_DESCRIPTOR_RANGE descRange{};
 	descRange.RangeType = descType;
 	descRange.NumDescriptors = count;
@@ -52,4 +52,6 @@ void RootSignature::addDescriptorCount(D3D12_SHADER_VISIBILITY shaderVisiblity, 
 
 	m_range.push_back(descRange);
 	m_shaderVisiblity.push_back(shaderVisiblity);
+
+	m_rootParameterType.push_back(type);
 }

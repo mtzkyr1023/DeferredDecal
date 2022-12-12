@@ -5,6 +5,8 @@
 bool VertexBuffer::create(ID3D12Device* device, ID3D12CommandQueue* queue, UINT bufferCount, UINT stride, UINT size, void* data) {
 	HRESULT res;
 
+	m_resourceType = ResourceType::kVertexBuffer;
+
 	m_resource.resize(bufferCount);
 	m_vertexBufferView.resize(bufferCount);
 
@@ -59,6 +61,8 @@ bool VertexBuffer::create(ID3D12Device* device, ID3D12CommandQueue* queue, UINT 
 	heapProp.CreationNodeMask = 1;
 	heapProp.VisibleNodeMask = 1;
 
+	resDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+
 	for (UINT i = 0; i < bufferCount; i++) {
 		res = device->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_COPY_DEST,
 			nullptr, IID_PPV_ARGS(m_resource[i].GetAddressOf()));
@@ -109,12 +113,17 @@ bool VertexBuffer::create(ID3D12Device* device, ID3D12CommandQueue* queue, UINT 
 		m_vertexBufferView[i].StrideInBytes = stride;
 	}
 
+	m_isUnorderedAccess = true;
+	m_isShaderResource = true;
+
 	return true;
 }
 
 
 bool IndexBuffer::create(ID3D12Device* device, ID3D12CommandQueue* queue, UINT bufferCount, UINT size, void* data) {
 	HRESULT res;
+
+	m_resourceType = ResourceType::kIndexBuffer;
 
 	m_resource.resize(bufferCount);
 	m_indexBufferView.resize(bufferCount);
@@ -170,6 +179,8 @@ bool IndexBuffer::create(ID3D12Device* device, ID3D12CommandQueue* queue, UINT b
 	heapProp.CreationNodeMask = 1;
 	heapProp.VisibleNodeMask = 1;
 
+	resDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+
 	for (UINT i = 0; i < bufferCount; i++) {
 		heapProp.Type = D3D12_HEAP_TYPE_DEFAULT;
 
@@ -221,6 +232,9 @@ bool IndexBuffer::create(ID3D12Device* device, ID3D12CommandQueue* queue, UINT b
 		m_indexBufferView[i].SizeInBytes = size;
 		m_indexBufferView[i].Format = DXGI_FORMAT_R32_UINT;
 	}
+
+	m_isUnorderedAccess = true;
+	m_isShaderResource = true;
 
 	return true;
 }
@@ -289,7 +303,7 @@ bool StructuredBuffer::create(ID3D12Device* device, UINT stride, UINT bufferCoun
 			D3D12_RESOURCE_DESC resDesc{};
 			resDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 			resDesc.Alignment = 0;
-			resDesc.Width = (UINT64)(stride * elementCount);
+			resDesc.Width = (UINT64)(stride * elementCount) + (isAppend ? (D3D12_UAV_COUNTER_PLACEMENT_ALIGNMENT - (stride * elementCount) % D3D12_UAV_COUNTER_PLACEMENT_ALIGNMENT + sizeof(UINT)) : 0);
 			resDesc.Height = 1;
 			resDesc.DepthOrArraySize = 1;
 			resDesc.MipLevels = 1;

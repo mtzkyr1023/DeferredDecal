@@ -9,28 +9,42 @@
 class VertexBuffer : public Resource {
 public:
 	VertexBuffer(const char* name) : Resource(name) {}
+	VertexBuffer() : Resource("vertexBuffer") {}
 	~VertexBuffer() = default;
 
 	bool create(ID3D12Device* device, ID3D12CommandQueue* queue, UINT bufferCount, UINT stride, UINT size, void* data);
 
 	D3D12_VERTEX_BUFFER_VIEW* getVertexBuferView(UINT num) { return &m_vertexBufferView[num]; }
 
+	bool getIsUnorderedAccess() { return m_isUnorderedAccess; }
+	bool getIsShaderResource() { return m_isShaderResource; }
+
 private:
 	std::vector<D3D12_VERTEX_BUFFER_VIEW> m_vertexBufferView;
+
+	bool m_isShaderResource;
+	bool m_isUnorderedAccess;
 };
 
 
 class IndexBuffer : public Resource {
 public:
 	IndexBuffer(const char* name) :Resource(name) {}
+	IndexBuffer() : Resource("indexBuffer") {}
 	~IndexBuffer() = default;
 
 	bool create(ID3D12Device* device, ID3D12CommandQueue* queue, UINT bufferCount, UINT size, void* data);
 
 	D3D12_INDEX_BUFFER_VIEW* getIndexBufferView(UINT num) { return &m_indexBufferView[num]; }
 
+	bool getIsUnorderedAccess() { return m_isUnorderedAccess; }
+	bool getIsShaderResource() { return m_isShaderResource; }
+
 private:
 	std::vector<D3D12_INDEX_BUFFER_VIEW> m_indexBufferView;
+
+	bool m_isShaderResource;
+	bool m_isUnorderedAccess;
 };
 
 
@@ -136,6 +150,8 @@ public:
 
 	bool IsAppendBuffer() { return m_isAppendBuffer; }
 	bool IsConsumeBuffer() { return m_isConsumeBuffer; }
+
+	UINT getCounterBufferOffset() { return ((m_elementCount * m_stride) + D3D12_UAV_COUNTER_PLACEMENT_ALIGNMENT - (m_elementCount * m_stride) % D3D12_UAV_COUNTER_PLACEMENT_ALIGNMENT); }
 
 private:
 	std::vector<BYTE*> m_bufferPtr;

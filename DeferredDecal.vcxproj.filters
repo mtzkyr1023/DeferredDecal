@@ -132,7 +132,7 @@
     <ClInclude Include="tools\xatlas.h">
       <Filter>リソース ファイル\tools</Filter>
     </ClInclude>
-    <ClInclude Include="framework\render_pipeline.h">
+    <ClInclude Include="render_pipeline.h">
       <Filter>ヘッダー ファイル\render_pass</Filter>
     </ClInclude>
     <ClInclude Include="framework\sampler.h">
@@ -269,7 +269,7 @@
     <ClCompile Include="tools\xatlas.cpp">
       <Filter>リソース ファイル\tools</Filter>
     </ClCompile>
-    <ClCompile Include="framework\render_pipeline.cpp">
+    <ClCompile Include="render_pipeline.cpp">
       <Filter>ソース ファイル\render_pass</Filter>
     </ClCompile>
     <ClCompile Include="tools\model.cpp">

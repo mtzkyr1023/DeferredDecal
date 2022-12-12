@@ -15,9 +15,11 @@ static const float SubpixMul = 1.0f / 8.0f;
 static const float SubpixMax = 64.0f;
 
 cbuffer ScreenInfo : register(b0) {
-	float4 screenInfo;
 	float4x4 padding1[3];
-	float4x3 padding2;
+	float4x4 padding2;
+	float4x4 padding3[3];
+	float4x3 padding4;
+	float4 screenInfo;
 }
 
 Texture2D<float4> srcTex : register(t0);
@@ -105,6 +107,7 @@ void main(uint3 id : SV_DispatchThreadID) {
 	else result = float4(rgbB, 0.0f);
     
 	destTex[id.xy] = result;
+	//destTex[id.xy] = float4(rgbM, 1.0f); 
 	
 //	for(uint i = 0; i < FXAA_SEARCH_STEPS; i++) {
 //		#if FXAA_SEARCH_ACCELERATION == 1

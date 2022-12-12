@@ -17,10 +17,14 @@ public:
 	D3D12_CPU_DESCRIPTOR_HANDLE getCpuHandle(UINT num);
 	D3D12_GPU_DESCRIPTOR_HANDLE getGpuHandle(UINT num);
 
+	void copyDescriptors(int destId, D3D12_CPU_DESCRIPTOR_HANDLE srcHandle);
+
 	UINT getDescriptorSize() { return m_descriptorSize; }
 
 private:
+	ID3D12Device* m_device;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_descHeap;
+	D3D12_DESCRIPTOR_HEAP_TYPE m_heapType;
 	UINT m_descriptorSize;
 };
 

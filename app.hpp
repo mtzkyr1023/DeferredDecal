@@ -16,7 +16,7 @@
 #include "tools/my_gui.h"
 
 
-#include "framework/render_pipeline.h"
+#include "render_pipeline.h"
 
 
 #include "glm-master/glm/glm.hpp"

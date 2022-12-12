@@ -24,19 +24,26 @@ public:
 		glm::vec3 aabbmax;
 		uint32_t indexOffset;
 		uint32_t indexCount;
-		uint32_t material;
-		glm::uvec3 padding;
+		uint64_t materialId;
+	};
 
-		Instance(const glm::vec3& aabbmin, const glm::vec3& aabbmax, uint32_t indexOffset, uint32_t indexCount, uint32_t material) {
-			this->aabbmin = aabbmin;
-			this->aabbmax = aabbmax;
-			this->indexOffset = indexOffset;
-			this->indexCount = indexCount;
-			this->material = material;
-			this->padding = glm::uvec3(0, 0, 0);
+	struct Vertex {
+		glm::vec4 pos;
+		glm::vec4 nor;
+		glm::vec4 tan;
+		glm::vec4 tex;
+
+		Vertex() {
+			this->pos = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+			this->nor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+			this->tan = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+			this->tex = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 		}
-		Instance() {
-			memset(this, 0, sizeof(Instance));
+		Vertex(const glm::vec3& pos, const glm::vec3& nor, const glm::vec3& tan, glm::vec2& tex) {
+			this->pos = glm::vec4(pos, 0.0f);
+			this->nor = glm::vec4(nor, 0.0f);;
+			this->tan = glm::vec4(tan, 0.0f);
+			this->tex = glm::vec4(tex, 0.0f, 0.0f);
 		}
 	};
 
@@ -46,14 +53,9 @@ public:
 	bool createFromGltf(ID3D12Device* dev, ID3D12CommandQueue* queue,
 		uint32_t bufferCount, const char* filename, bool binary = false);
 
-	int getPositionBuffer() { return m_positionBuffer; }
-	int getNormalBuffer() { return m_normalBuffer; }
-	int getTangentBuffer() { return m_tangentBuffer; }
-	int getUVBuffer() { return m_uvBuffer; }
+	int getVertexBuffer() { return m_vertexBuffer; }
 	int getIndexBuffer() { return m_indexBuffer; }
 	int getInstanceBuffer() { return m_instanceBuffer; }
-
-	int getOffsetBuffer() { return m_offsetBuffer; }
 
 	uint32_t getAllVertexCount() { return m_allVertexCount; }
 	uint32_t getAllIndexCount() { return m_allIndexCount; }
@@ -109,17 +111,15 @@ public:
 
 	void createBundle(ID3D12Device* device, ID3D12RootSignature* rootSignature);
 
+	int instanceToIndexMap() { return m_instanceToIndexMap; }
+
 private:
 	bool loadModelCache(ID3D12Device* device, ID3D12CommandQueue* queue, uint32_t bufferCount);
 	void saveModelCache();
 
 
 private:
-	int m_positionBuffer;
-	int m_normalBuffer;
-	int m_tangentBuffer;
-	int m_uvBuffer;
-	int m_uv2Buffer;
+	int m_vertexBuffer;
 
 	int m_weightBuffer;
 	int m_boneIndexBuffer;
@@ -128,7 +128,7 @@ private:
 
 	int m_instanceBuffer;
 
-	int m_offsetBuffer;
+	int m_instanceToIndexMap;
 
 	std::string m_filename;
 
@@ -148,6 +148,7 @@ private:
 	std::vector<glm::vec4> m_normalArray;
 	std::vector<glm::vec4> m_tangentArray;
 	std::vector<glm::vec4> m_uvArray;
+	std::vector<Vertex> m_vertexArray;
 
 	std::vector<glm::vec2> m_texcoord;
 
@@ -162,6 +163,7 @@ private:
 	std::vector<uint32_t> m_indexArray;
 
 	std::vector<Instance> m_instanceArray;
+	std::vector<int> m_materialIdBuffer;
 
 	CommandList m_bundle;
 };

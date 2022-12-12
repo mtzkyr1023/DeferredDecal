@@ -186,6 +186,34 @@ int ResourceManager::createByteAddressBuffer(ID3D12Device* device, DXGI_FORMAT f
 	return id;
 }
 
+int ResourceManager::createVertexBuffer(ID3D12Device* device, ID3D12CommandQueue* queue, UINT bufferCount, UINT stride, UINT size, void* data) {
+	int id = m_uniqueId;
+	if (m_resourceArray.find(id) != m_resourceArray.end()) m_resourceArray.erase(id);
+	m_resourceArray[id] = std::make_unique<VertexBuffer>();
+	if (!static_cast<VertexBuffer*>(m_resourceArray[id].get())->create(device, queue, bufferCount, stride, size, data))
+		return -1;
+
+	m_resourceArray[id]->setId(id);
+
+	m_uniqueId++;
+
+	return id;
+}
+
+int ResourceManager::createIndexBuffer(ID3D12Device* device, ID3D12CommandQueue* queue, UINT bufferCount, UINT stride, UINT size, void* data) {
+	int id = m_uniqueId;
+	if (m_resourceArray.find(id) != m_resourceArray.end()) m_resourceArray.erase(id);
+	m_resourceArray[id] = std::make_unique<IndexBuffer>();
+	if (!static_cast<IndexBuffer*>(m_resourceArray[id].get())->create(device, queue, bufferCount, size, data))
+		return -1;
+
+	m_resourceArray[id]->setId(id);
+
+	m_uniqueId++;
+
+	return id;
+}
+
 int ResourceManager::addSamplerState(D3D12_SAMPLER_DESC samplerState) {
 	int id = m_uniqueId;
 	m_samplerStateTable[id] = samplerState;
@@ -226,7 +254,9 @@ int ResourceManager::addComputeShader(const wchar_t* filename) {
 }
 
 
-void ResourceManager::updateDescriptorHeap(Device* device) {
+void ResourceManager::updateDescriptorHeap(Device* device, int globalHeapCount) {
+
+	m_globalHeap.create(device->getDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, globalHeapCount);
 
 	std::vector<Resource*> shaderResource;
 	std::vector<Resource*> renderTarget;
@@ -277,8 +307,27 @@ void ResourceManager::updateDescriptorHeap(Device* device) {
 					renderTargetCount += tex->getDepth() - 1;
 				}
 			}
-		}
 			break;
+		}
+		case ResourceType::kVertexBuffer :
+		{
+			VertexBuffer* vertexBuffer = static_cast<VertexBuffer*>(ite.second.get());
+			if (vertexBuffer->getIsShaderResource()) {
+				shaderResource.push_back(ite.second.get());
+				shaderResourceCount += ite.second->getResourceCount() * (vertexBuffer->getIsUnorderedAccess() ? 2 : 1);
+			}
+			break;
+		}
+
+		case ResourceType::kIndexBuffer:
+		{
+			IndexBuffer* indexBuffer = static_cast<IndexBuffer*>(ite.second.get());
+			if (indexBuffer->getIsShaderResource()) {
+				shaderResource.push_back(ite.second.get());
+				shaderResourceCount += ite.second->getResourceCount() * (indexBuffer->getIsUnorderedAccess() ? 2 : 1);
+			}
+			break;
+		}
 		}
 	}
 
@@ -288,7 +337,7 @@ void ResourceManager::updateDescriptorHeap(Device* device) {
 	m_samplerHeap.destroy();
 
 	if (shaderResource.size() != 0)
-		m_shaderResourceHeap.create(device->getDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, (UINT)shaderResourceCount);
+		m_shaderResourceHeap.create(device->getDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, (UINT)shaderResourceCount);
 	if(renderTarget.size() != 0)
 		m_rtvHeap.create(device->getDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, (UINT)renderTargetCount);
 	if (depthStencil.size() != 0)
@@ -519,19 +568,18 @@ void ResourceManager::updateDescriptorHeap(Device* device) {
 					D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc{};
 					uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
 					uavDesc.Format = DXGI_FORMAT_UNKNOWN;
-					uavDesc.Buffer.CounterOffsetInBytes = 0;
+					uavDesc.Buffer.CounterOffsetInBytes = sb->IsAppendBuffer() ? sb->getCounterBufferOffset() : 0;
 					uavDesc.Buffer.FirstElement = 0;
 					uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
 					uavDesc.Buffer.NumElements = sb->getElementCount();
 					uavDesc.Buffer.StructureByteStride = sb->getStride();
 
-					device->getDevice()->CreateUnorderedAccessView(sb->getResource(j), nullptr, &uavDesc, m_shaderResourceHeap.getCpuHandle(offset));
+					device->getDevice()->CreateUnorderedAccessView(sb->getResource(j), sb->IsAppendBuffer() ? sb->getResource(j) : nullptr, &uavDesc, m_shaderResourceHeap.getCpuHandle(offset));
 
 					offset++;
 				}
 			}
-			
-			m_shaderResourceDescriptorTable[sb->getId()] = { start, sb->getResourceCount() };
+			m_shaderResourceDescriptorTable[sb->getId()] = { start, offset };
 		}
 		else if (shaderResource[i]->GetResourceType() == ResourceType::kByteAddressBuffer) {
 			ByteAddressBuffer* bb = static_cast<ByteAddressBuffer*>(shaderResource[i]);
@@ -567,6 +615,81 @@ void ResourceManager::updateDescriptorHeap(Device* device) {
 					offset++;
 				}
 			}
+
+			m_shaderResourceDescriptorTable[bb->getId()] = { start, offset };
+
+		}
+		else if (shaderResource[i]->GetResourceType() == ResourceType::kVertexBuffer) {
+			VertexBuffer* vb = static_cast<VertexBuffer*>(shaderResource[i]);
+			int start = offset;
+			for (int j = 0; j < vb->getResourceCount(); j++) {
+				D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+
+				srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+				srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+				srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+				srvDesc.Buffer.FirstElement = 0;
+				srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+				srvDesc.Buffer.NumElements = vb->getVertexBuferView(j)->SizeInBytes / vb->getVertexBuferView(j)->StrideInBytes;
+				srvDesc.Buffer.StructureByteStride = vb->getVertexBuferView(j)->StrideInBytes;
+
+				device->getDevice()->CreateShaderResourceView(vb->getResource(j), &srvDesc, m_shaderResourceHeap.getCpuHandle(offset));
+
+				offset++;
+
+				if (vb->getIsUnorderedAccess()) {
+					D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc{};
+					uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+					uavDesc.Format = DXGI_FORMAT_UNKNOWN;
+					uavDesc.Buffer.CounterOffsetInBytes = 0;
+					uavDesc.Buffer.FirstElement = 0;
+					uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
+					uavDesc.Buffer.NumElements = vb->getVertexBuferView(j)->SizeInBytes / vb->getVertexBuferView(j)->StrideInBytes;
+					uavDesc.Buffer.StructureByteStride = vb->getVertexBuferView(j)->StrideInBytes;
+
+					device->getDevice()->CreateUnorderedAccessView(vb->getResource(j), nullptr, &uavDesc, m_shaderResourceHeap.getCpuHandle(offset));
+
+					offset++;
+				}
+			}
+			m_shaderResourceDescriptorTable[vb->getId()] = { start, offset };
+
+		}
+		else if (shaderResource[i]->GetResourceType() == ResourceType::kIndexBuffer) {
+			IndexBuffer* ib = static_cast<IndexBuffer*>(shaderResource[i]);
+			int start = offset;
+			for (int j = 0; j < ib->getResourceCount(); j++) {
+				D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+
+				srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+				srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+				srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+				srvDesc.Buffer.FirstElement = 0;
+				srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+				srvDesc.Buffer.NumElements = ib->getIndexBufferView(j)->SizeInBytes / sizeof(int);
+				srvDesc.Buffer.StructureByteStride = sizeof(int);
+
+				device->getDevice()->CreateShaderResourceView(ib->getResource(j), &srvDesc, m_shaderResourceHeap.getCpuHandle(offset));
+
+				offset++;
+
+				if (ib->getIsUnorderedAccess()) {
+					D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc{};
+					uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+					uavDesc.Format = DXGI_FORMAT_UNKNOWN;
+					uavDesc.Buffer.CounterOffsetInBytes = 0;
+					uavDesc.Buffer.FirstElement = 0;
+					uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
+					uavDesc.Buffer.NumElements = ib->getIndexBufferView(j)->SizeInBytes / sizeof(int);
+					uavDesc.Buffer.StructureByteStride = sizeof(int);
+
+					device->getDevice()->CreateUnorderedAccessView(ib->getResource(j), nullptr, &uavDesc, m_shaderResourceHeap.getCpuHandle(offset));
+
+					offset++;
+				}
+			}
+			m_shaderResourceDescriptorTable[ib->getId()] = { start, offset };
+
 		}
 	}
 

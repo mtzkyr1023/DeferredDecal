@@ -8,6 +8,8 @@
 #include <string>
 
 enum class ResourceType {
+	kVertexBuffer,
+	kIndexBuffer,
 	kConstanceBuffer,
 	kStrucuredBuffer,
 	kByteAddressBuffer,

@@ -97,8 +97,8 @@ void Camera::Update(float deltaTime) {
 
 	static float pitch, yaw;
 
-	pitch -= (float)Input::Instance().GetMoveYRightPushed() * 0.1f * deltaTime;
-	yaw += (float)Input::Instance().GetMoveXRightPushed() * 0.1f * deltaTime;
+	pitch -= (float)Input::Instance().GetMoveYRightPushed() * 1.1f * deltaTime;
+	yaw += (float)Input::Instance().GetMoveXRightPushed() * 1.1f * deltaTime;
 	
 	//m_transform.RotateLocal(0.0f, 0.0f, (float)Input::Instance().GetMoveYRightPushed() * 0.01f);
 	//m_transform.RotateLocal((float)Input::Instance().GetMoveYRightPushed() * 0.01f, (float)Input::Instance().GetMoveXRightPushed() * 0.01f, 0.0f);

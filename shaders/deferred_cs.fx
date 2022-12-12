@@ -36,38 +36,45 @@ struct VertexOutput
    float4 clipSpacePosition : SV_POSITION;
 };
 
+struct Instance {
+	float3 aabbmin;
+	float3 aabbmax;
+	uint indexOffset;
+	uint indexCount;
+	uint2 cbv;
+};
+
 cbuffer __SystemConstant : register(b0) {
 	matrix InvViewProjMatrix;
+	matrix ViewMatrix;
 	float4 WorldSpaceCameraPosition;
 	uint2 ImageSize;
-	uint NumLights;
+	float isVB;
 	uint ShaderId;
-	matrix Padding1;
 	matrix Padding2;
 	float4x2 Padding3;
 }
 
 Texture2D<uint2> visibilityBuffer : register(t0);
-StructuredBuffer<uint4> offsets : register(t1);
-StructuredBuffer<uint4> tiles : register(t2);
-StructuredBuffer<float4> positionBuffer : register(t3);
-StructuredBuffer<float4> normalBuffer : register(t4);
-StructuredBuffer<float4> uvBuffer : register(t5);
-StructuredBuffer<uint> indexBuffer : register(t6);
-StructuredBuffer<uint4> instanceToIndexMap : register(t7);
+StructuredBuffer<VertexInput> vertexBuffer : register(t1);
+StructuredBuffer<uint> indexBuffer : register(t2);
+StructuredBuffer<Instance> indexOffsetBuffer : register(t3);
+StructuredBuffer<uint4> instanceToIndexMap : register(t4);
+Texture2D<float4> albedoTexture[] : register(t5);
+SamplerState wrapSampler : register(s0);
 
 RWTexture2D<float4> resultTex : register(u0);
 
 VertexInput __loadVertex(uint bufferIndex)
 {
    VertexInput vIn;
-   vIn.position  = positionBuffer[bufferIndex];
-   vIn.tangent   = normalBuffer[bufferIndex];
-   vIn.bitangent = float4(0.0f, 0.0f, 0.0f, 0.0f);
+   vIn.position  = vertexBuffer[bufferIndex].position;
+   vIn.tangent   = vertexBuffer[bufferIndex].tangent;
+   vIn.bitangent = vertexBuffer[bufferIndex].bitangent;
 	
-
 	
-   vIn.texCoord = uvBuffer[bufferIndex];
+	
+   vIn.texCoord = vertexBuffer[bufferIndex].texCoord;
 
    return vIn;
 }
@@ -88,15 +95,20 @@ float3 __intersect(float3 p0, float3 p1, float3 p2, float3 o, float3 d)
    return float3(a, b, c);
 }
 
-VertexInput __loadAndInterpolateVertex(uint iOffset, uint vOffset, uint tID, float2 pixelCoord, out float filterWidth)
+VertexInput __loadAndInterpolateVertex(uint tID, uint iId, float2 pixelCoord, out float filterWidth)
 {
-   uint index0 = indexBuffer[iOffset + tID * 3 + 0];
-   uint index1 = indexBuffer[iOffset + tID * 3 + 1];
-   uint index2 = indexBuffer[iOffset + tID * 3 + 2];
+   uint indexOffset = indexOffsetBuffer[iId].indexOffset;
+   uint index0 = indexBuffer[ tID * 3 + 0 + indexOffset ];
+   uint index1 = indexBuffer[ tID * 3 + 1 + indexOffset ];
+   uint index2 = indexBuffer[ tID * 3 + 2 + indexOffset ];
 
-   VertexInput v0 = __loadVertex( index0 + vOffset );
-   VertexInput v1 = __loadVertex( index1 + vOffset );
-   VertexInput v2 = __loadVertex( index2 + vOffset );
+   VertexInput v0 = __loadVertex( index0 );
+   VertexInput v1 = __loadVertex( index1 );
+   VertexInput v2 = __loadVertex( index2 );
+   
+   v0.position = mul(v0.position, ViewMatrix);
+   v1.position = mul(v1.position, ViewMatrix);
+   v2.position = mul(v2.position, ViewMatrix);
    
    //v0.tangent.xyz = normalize(v0.tangent.xyz + v1.tangent.xyz + v2.tangent.xyz);
    
@@ -105,21 +117,22 @@ VertexInput __loadAndInterpolateVertex(uint iOffset, uint vOffset, uint tID, flo
    d = mul(d, InvViewProjMatrix);
    d /= d.w;
    
-   d.xyz = normalize(d.xyz - WorldSpaceCameraPosition.xyz);
+   d = normalize(d);
       
    float4 p0 = v0.position;
    float4 p1 = v1.position;
    float4 p2 = v2.position;
 
    /// Compute the barycentric coordinates
-   float3 H  = __intersect(p0.xyz, p1.xyz, p2.xyz, WorldSpaceCameraPosition.xyz, -d.xyz);
+   float3 H  = __intersect(p0.xyz, p1.xyz, p2.xyz, float3(0.0f, 0.0f, 0.0f), d.xyz);
 
    VertexInput vIn;
    vIn.position  = mad(v0.position,  H.x, mad(v1.position,  H.y, (v2.position  * H.z)));
    vIn.tangent   = mad(v0.tangent,   H.x, mad(v1.tangent,   H.y, (v2.tangent   * H.z)));
    vIn.bitangent = mad(v0.bitangent, H.x, mad(v1.bitangent, H.y, (v2.bitangent * H.z)));
    vIn.texCoord  = mad(v0.texCoord,  H.x, mad(v1.texCoord,  H.y, (v2.texCoord  * H.z)));
-
+	
+	
    return vIn;
 }
 
@@ -131,7 +144,6 @@ void main(uint3 globalThreadId : SV_DispatchThreadID,
 	uint3 tileThreadId : SV_GroupThreadID,
 	uint3 groupId : SV_GroupID) {
 	
-	uint tileId = tiles[offsets[ShaderId].x + groupId.x].x;
 	const uint2 PixelCoord = uint2(globalThreadId.xy
 	);
 	
@@ -139,19 +151,28 @@ void main(uint3 globalThreadId : SV_DispatchThreadID,
 	uint groupThreadId = tileThreadId.x + tileThreadId.y * TileSizeX;
 	
 	uint2 vData = visibilityBuffer[PixelCoord];
-	uint tId = vData.x;
-	uint iId = vData.y;
-	uint4 iData = instanceToIndexMap[iId];
-	uint iOffset = iData.x;
-	uint vOffset = iData.y;
-	uint sId = iData.z;
+	uint tId = vData.y;
+	uint iId = vData.x;
+	uint sId = instanceToIndexMap[iId];
 	//if (sId > 10) return;
 	
 	float2 ImageCoord = float2(PixelCoord.x + 0.5f, PixelCoord.y + 0.5f) / ImageSize;
 	float FilterWidth = 1.0f;
 	
-	VertexInput vIn = __loadAndInterpolateVertex(iOffset, vOffset, tId, PixelCoord, FilterWidth);
+	VertexInput vIn = __loadAndInterpolateVertex(tId, iId, (float2)PixelCoord, FilterWidth);
 	
-	//resultTex[PixelCoord] = float4(FilterWidth, 0.0f, 0.0f, 1.0f);
-	resultTex[PixelCoord] = float4(vIn.tangent.xyz, 1.0f);
+	//resultTex[PixelCoord] = float4((float2)vData / 100000.0f, 0.0f, 1.0f);
+	
+	float intensity = saturate(dot(normalize(float3(1, 1, 1)), vIn.tangent.xyz)) * 0.5f + 0.5f;
+	intensity *= intensity;
+	
+	resultTex[PixelCoord] = float4((float)(iId % 8) / 8.0f, 0.0f, 0.0f, 0.0f);
+	//resultTex[PixelCoord] = float4(intensity, intensity, intensity, 1.0f);
+	
+	float4 color = albedoTexture[sId].SampleLevel(wrapSampler, vIn.texCoord.xy, 0);
+	
+	if (isVB > 0.0f)
+		color = float4((float)(tId % 128) / 128.0f, (float)(iId % 128) / 128.0f, 0.0f, 0.0f);
+	
+	resultTex[PixelCoord] = color;
 }
